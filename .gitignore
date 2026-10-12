@@ -1,0 +1,20 @@
+# File biên dịch
+/build/
+/bin/
+/target/
+*.class
+*.war
+
+# Log
+*.log
+
+# Cấu hình chứa thông tin riêng
+.env
+.env.*
+!.env.example
+/src/main/webapp/META-INF/context.xml
+/WebContent/META-INF/context.xml
+
+# File hệ điều hành
+.DS_Store
+Thumbs.db
