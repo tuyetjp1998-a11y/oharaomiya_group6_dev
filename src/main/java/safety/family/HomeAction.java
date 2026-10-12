@@ -6,6 +6,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import tool.Action;
 
+/**
+ * 保護者ホーム画面を表示するAction。
+ */
 public class HomeAction extends Action {
 
     @Override
@@ -25,6 +28,15 @@ public class HomeAction extends Action {
         // なし
 
         // ビジネスロジック 4
+        res.setHeader("Cache-Control", "no-store");
+
+        if (!"GET".equalsIgnoreCase(req.getMethod())) {
+            res.setHeader("Allow", "GET");
+            res.sendError(
+                    HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+            return;
+        }
+
         if (user == null) {
             res.sendRedirect(req.getContextPath()
                     + "/safety/auth/Login.action");
@@ -41,11 +53,11 @@ public class HomeAction extends Action {
         // なし
 
         // レスポンス値をセット 6
-        res.setHeader("Cache-Control", "no-store");
-        req.setAttribute("pageTitle", "保護者トップ");
+        req.setAttribute("pageTitle", "保護者ホーム");
 
         // JSPへフォワード 7
-        req.getRequestDispatcher("/WEB-INF/views/home.jsp")
+        req.getRequestDispatcher(
+                "/WEB-INF/views/family/home.jsp")
                 .forward(req, res);
     }
 }

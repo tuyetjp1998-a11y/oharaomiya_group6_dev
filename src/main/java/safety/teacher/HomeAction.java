@@ -45,7 +45,7 @@ public class HomeAction extends Action {
         req.setAttribute("pageTitle", "教員トップ");
 
         // JSPへフォワード 7
-        req.getRequestDispatcher("/WEB-INF/views/home.jsp")
+        req.getRequestDispatcher("/WEB-INF/views/teacher/home.jsp")
                 .forward(req, res);
     }
 }

@@ -25,6 +25,15 @@ public class HomeAction extends Action {
         // なし
 
         // ビジネスロジック 4
+        res.setHeader("Cache-Control", "no-store");
+
+        if (!"GET".equalsIgnoreCase(req.getMethod())) {
+            res.setHeader("Allow", "GET");
+            res.sendError(
+                    HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+            return;
+        }
+
         if (user == null) {
             res.sendRedirect(req.getContextPath()
                     + "/safety/auth/Login.action");
@@ -33,7 +42,8 @@ public class HomeAction extends Action {
 
         if (!user.isActive()
                 || !"PRINCIPAL".equals(user.getRole())) {
-            res.sendError(HttpServletResponse.SC_FORBIDDEN);
+            res.sendError(
+                    HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 
@@ -41,11 +51,11 @@ public class HomeAction extends Action {
         // なし
 
         // レスポンス値をセット 6
-        res.setHeader("Cache-Control", "no-store");
-        req.setAttribute("pageTitle", "校長トップ");
+        req.setAttribute("pageTitle", "管理ホーム");
 
         // JSPへフォワード 7
-        req.getRequestDispatcher("/WEB-INF/views/home.jsp")
+        req.getRequestDispatcher(
+                "/WEB-INF/views/principal/home.jsp")
                 .forward(req, res);
     }
 }

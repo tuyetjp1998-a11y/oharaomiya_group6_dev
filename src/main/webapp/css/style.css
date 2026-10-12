@@ -687,3 +687,17 @@ textarea:focus-visible {
     opacity: 1;
     cursor: default;
 }
+/* 未接続メニューも元のリンクと同じ配置にする */
+.side .menu-disabled {
+    display: block;
+    padding: 11px 13px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    color: inherit;
+    font-size: inherit;
+}
+
+/* ログアウト確認フォーム */
+.dialog form {
+    margin: 0;
+}
