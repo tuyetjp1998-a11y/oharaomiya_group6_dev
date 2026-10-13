@@ -11,73 +11,113 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1">
 
-    <title>ログイン | 学校安否確認</title>
+    <title>ログイン | AnpiLink</title>
 
     <link rel="stylesheet"
-      href="${pageContext.request.contextPath}/css/style.css">
+          href="${pageContext.request.contextPath}/css/style.css">
 </head>
-<body>
-    <div class="login">
-        <section class="login-art">
-            <h1>学校と家庭をつなぐ<br>安否確認</h1>
+<body class="a">
+    <c:url var="loginExecuteUrl"
+           value="/safety/auth/LoginExecute.action" />
+
+    <main class="login-layout">
+        <section class="login-story">
+            <h1 class="login-brand">AnpiLink</h1>
+
+            <div class="story-copy">
+                <h3 class="story-heading">学校安否確認</h3>
+                <h2>学校と家庭を、<br>安心でつなぐ。</h2>
+
+                <div class="school-art" aria-hidden="true">
+                    <div class="art-orbit"></div>
+                    <div class="art-orbit second"></div>
+
+                    <div class="art-school">
+                        <svg viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.7"
+                             stroke-linecap="round"
+                             stroke-linejoin="round">
+                            <path d="m3 8 9-5 9 5v13H3ZM9 21v-7h6v7M12 6v4M10 8h4M5 12h2m10 0h2M5 16h2m10 0h2"/>
+                        </svg>
+                    </div>
+
+                    <span class="art-check">
+                        <svg viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.7"
+                             stroke-linecap="round"
+                             stroke-linejoin="round">
+                            <path d="m5 12 4 4L19 6"/>
+                        </svg>
+                    </span>
+                </div>
+            </div>
         </section>
 
-        <main class="login-box">
-            <div class="brand">学校安否確認</div>
-            <h1>ログイン</h1>
+        <section class="login-form-area">
+            <div class="login-form">
+                <h1 class="login-small-mark login-brand">
+                    AnpiLink
+                </h1>
 
-            <%-- 認証に失敗した場合 --%>
-            <c:if test="${requestScope.loginFailed}">
-                <p class="form-error" role="alert">
-                    ユーザーID、パスワード、または利用者区分が正しくありません。
+                <h2>ログイン</h2>
+
+                <p class="form-intro">
+                    アカウント情報を入力してください
                 </p>
-            </c:if>
 
-            <c:url var="loginExecuteUrl"
-                   value="/safety/auth/LoginExecute.action"/>
+                <c:if test="${requestScope.loginFailed}">
+                    <p class="login-error" role="alert">
+                        ユーザーIDまたはパスワードが正しくないか、
+                        アカウントが利用できません。
+                    </p>
+                </c:if>
 
-            <form class="login-form"
-                  action="${loginExecuteUrl}"
-                  method="post">
+                <form action="${loginExecuteUrl}" method="post">
+                    <input type="hidden"
+                           name="csrfToken"
+                           value="${sessionScope.csrfToken}">
 
-                <%-- LoginActionで生成したCSRFトークン --%>
-                <input type="hidden"
-                       name="csrfToken"
-                       value="${sessionScope.csrfToken}">
+                    <label for="user">ユーザーID</label>
+                    <input id="user"
+                           name="loginId"
+                           type="text"
+                           required
+                           maxlength="100"
+                           placeholder="ユーザーIDを入力"
+                           autocomplete="username">
 
-                <label for="loginId">ユーザーID</label>
-                <input type="text"
-                       id="loginId"
-                       name="loginId"
-                       autocomplete="username"
-                       maxlength="100"
-                       required>
+                    <label for="password">パスワード</label>
+                    <input id="password"
+                           name="password"
+                           type="password"
+                           required
+                           autocomplete="current-password"
+                           placeholder="パスワードを入力">
 
-                <label for="password">パスワード</label>
-                <input type="password"
-                       id="password"
-                       name="password"
-                       autocomplete="current-password"
-                       required>
+                    <button type="submit" class="login-button">
+                        ログイン
+                        <svg viewBox="0 0 24 24"
+                             aria-hidden="true"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.7"
+                             stroke-linecap="round"
+                             stroke-linejoin="round">
+                            <path d="M5 12h14m-5-5 5 5-5 5"/>
+                        </svg>
+                    </button>
+                </form>
 
-                <label for="role">利用者</label>
-                <select id="role" name="role" required>
-                    <option value="STUDENT">生徒</option>
-                    <option value="FAMILY">保護者</option>
-                    <option value="TEACHER">教員</option>
-                    <option value="PRINCIPAL">校長先生</option>
-                </select>
-
-                <button type="submit" class="primary">
-                    ログイン
-                </button>
-            </form>
-            <c:url var="registerUrl" value="/safety/auth/Register.action" />
-
-			<a class="primary register-link" href="${registerUrl}">
-    			新規登録
-			</a>
-        </main>
-    </div>
+                <%-- 新規登録機能の接続までは無効にする --%>
+                <a class="register-link" aria-disabled="true">
+                    新規登録
+                </a>
+            </div>
+        </section>
+    </main>
 </body>
 </html>

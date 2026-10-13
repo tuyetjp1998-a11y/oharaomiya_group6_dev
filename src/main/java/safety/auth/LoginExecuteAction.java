@@ -30,7 +30,6 @@ public class LoginExecuteAction extends Action {
         // リクエストパラメーターの取得 2
         String loginId = req.getParameter("loginId");
         String password = req.getParameter("password");
-        String role = req.getParameter("role");
         String csrfToken = req.getParameter("csrfToken");
 
         // POST以外のリクエストを拒否
@@ -61,8 +60,7 @@ public class LoginExecuteAction extends Action {
                 && !loginId.isBlank()
                 && loginId.length() <= 100
                 && password != null
-                && !password.isEmpty()
-                && role != null) {
+                && !password.isEmpty()) {
 
             loginData = userDao.findByLoginId(loginId);
         }
@@ -76,11 +74,9 @@ public class LoginExecuteAction extends Action {
                     password,
                     loginData.getPasswordHash());
 
-            if (passwordCorrect
-                    && user.isActive()
-                    && role.equals(user.getRole())) {
+            if (passwordCorrect && user.isActive()) {
 
-                // 遷移先はDBに保存された利用者区分で決定
+                // DBに保存された利用者区分で遷移先を決定
                 switch (user.getRole()) {
                     case "STUDENT":
                         redirectPath =
@@ -118,7 +114,6 @@ public class LoginExecuteAction extends Action {
         res.setHeader("Cache-Control", "no-store");
 
         if (loginFailed) {
-
             req.setAttribute("loginFailed", true);
 
         } else {
@@ -145,7 +140,6 @@ public class LoginExecuteAction extends Action {
 
         // JSPへフォワード 7
         if (loginFailed) {
-
             req.getRequestDispatcher(
                     "/WEB-INF/views/auth/login.jsp")
                     .forward(req, res);

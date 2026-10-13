@@ -11,77 +11,103 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1">
 
-    <title>生徒ホーム | 学校安否確認</title>
+    <title>生徒ホーム | AnpiLink</title>
 
     <link rel="stylesheet"
           href="${pageContext.request.contextPath}/css/style.css">
 </head>
-<body>
+<body class="a">
     <%-- 遷移先URL --%>
     <c:url var="homeUrl"
            value="/safety/student/Home.action" />
     <c:url var="answerUrl"
            value="/safety/student/Answer.action" />
-    <c:url var="parentStatusUrl"
-           value="/safety/student/ParentStatus.action" />
     <c:url var="moreUrl"
            value="/safety/student/More.action" />
     <c:url var="logoutUrl"
            value="/safety/auth/Logout.action" />
 
     <div class="phone">
-        <header class="top">
-            <div class="brand">学校安否確認</div>
+        <header class="phone-header">
+            <div class="brand">AnpiLink</div>
 
             <button type="button"
                     class="logout"
+                    id="logoutOpen"
                     onclick="openLogoutDialog()">
                 ログアウト
             </button>
         </header>
 
-        <main class="home-only">
-            <div class="home-box">
-                <div class="who">生徒</div>
+        <main class="student-main">
+            <div class="student-welcome">
+                <p class="eyebrow">生徒ホーム</p>
 
                 <h1>
                     <c:out value="${sessionScope.user.name}" />さん
                 </h1>
-
-                <a class="answer" href="${answerUrl}">
-                    安否を回答
-                </a>
             </div>
+
+            <section class="answer-area">
+                <a class="answer-button" href="${answerUrl}">
+                    <span>安否を送信</span>
+
+                    <svg viewBox="0 0 24 24"
+                         aria-hidden="true"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.7"
+                         stroke-linecap="round"
+                         stroke-linejoin="round">
+                        <path d="M5 12h14m-5-5 5 5-5 5" />
+                    </svg>
+                </a>
+            </section>
         </main>
 
-        <nav class="tabs" aria-label="メインメニュー">
-            <a href="${homeUrl}" aria-current="page">
-                <b aria-hidden="true">●</b>
-                ホーム
-            </a>
+        <nav class="phone-tabs tabs two"
+             aria-label="メインメニュー">
+            <a class="active"
+               href="${homeUrl}"
+               aria-current="page">
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7" />
+                </svg>
 
-            <a href="${parentStatusUrl}">
-                <b aria-hidden="true">人</b>
-                保護者回答
+                <span>ホーム</span>
             </a>
 
             <a href="${moreUrl}">
-                <b aria-hidden="true">≡</b>
-                その他
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <path d="M5 6h14M5 12h14M5 18h14" />
+                </svg>
+
+                <span>その他</span>
             </a>
         </nav>
     </div>
 
     <%-- ログアウト確認ダイアログ --%>
     <div class="modal"
-         id="logoutModal"
+         id="logout-dialog"
          role="dialog"
          aria-modal="true"
-         aria-labelledby="logoutTitle"
+         aria-labelledby="logout-title"
          aria-hidden="true">
-
         <div class="dialog">
-            <h2 id="logoutTitle">ログアウトしますか？</h2>
+            <h2 id="logout-title">ログアウトしますか？</h2>
 
             <form action="${logoutUrl}" method="post">
                 <input type="hidden"
@@ -90,13 +116,14 @@
 
                 <div>
                     <button type="button"
+                            class="plain-button"
                             id="logoutCancel"
                             onclick="closeLogoutDialog()">
                         キャンセル
                     </button>
 
                     <button type="submit"
-                            style="background: #c94747; color: white;">
+                            class="delete-button">
                         ログアウト
                     </button>
                 </div>
@@ -105,7 +132,8 @@
     </div>
 
     <script>
-        const logoutModal = document.getElementById("logoutModal");
+        const logoutModal =
+                document.getElementById("logout-dialog");
         let previousFocus = null;
 
         function openLogoutDialog() {
@@ -134,7 +162,8 @@
             }
 
             if (event.key === "Tab") {
-                const buttons = logoutModal.querySelectorAll("button");
+                const buttons =
+                        logoutModal.querySelectorAll("button");
                 const firstButton = buttons[0];
                 const lastButton = buttons[buttons.length - 1];
 
