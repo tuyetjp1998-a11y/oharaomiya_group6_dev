@@ -2903,3 +2903,60 @@ button,input,select,textarea {
     color: #8192a6;
     cursor: default;
 }
+
+/* 未実装のメニュー項目 */
+.menu a[aria-disabled="true"] {
+    cursor: default;
+}
+
+.menu + .muted {
+    margin-top: 16px;
+}
+
+/* 学校からの連絡：画面確認用 */
+.child-card[aria-disabled="true"] {
+    cursor: default;
+}
+
+.notice-preview-note {
+    margin-top: 16px;
+}
+
+/* その他メニューのログアウトボタン */
+.menu > button.logout-menu {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 18px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+/* モバイル画面のフッターを中央に配置 */
+.phone > .app-footer.mobile-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 48px;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+/* 位置情報取得ボタン */
+#getLocationButton {
+    width: 100%;
+}
+
+#getLocationButton:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}

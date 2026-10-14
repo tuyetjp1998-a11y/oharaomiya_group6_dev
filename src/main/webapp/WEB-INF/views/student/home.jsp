@@ -24,19 +24,10 @@
            value="/safety/student/Answer.action" />
     <c:url var="moreUrl"
            value="/safety/student/More.action" />
-    <c:url var="logoutUrl"
-           value="/safety/auth/Logout.action" />
 
     <div class="phone">
         <header class="phone-header">
             <div class="brand">AnpiLink</div>
-
-            <button type="button"
-                    class="logout"
-                    id="logoutOpen"
-                    onclick="openLogoutDialog()">
-                ログアウト
-            </button>
         </header>
 
         <main class="student-main">
@@ -64,6 +55,10 @@
                 </a>
             </section>
         </main>
+
+        <footer class="app-footer mobile-footer">
+            ＠AnpiLink
+        </footer>
 
         <nav class="phone-tabs tabs two"
              aria-label="メインメニュー">
@@ -98,86 +93,5 @@
             </a>
         </nav>
     </div>
-
-    <%-- ログアウト確認ダイアログ --%>
-    <div class="modal"
-         id="logout-dialog"
-         role="dialog"
-         aria-modal="true"
-         aria-labelledby="logout-title"
-         aria-hidden="true">
-        <div class="dialog">
-            <h2 id="logout-title">ログアウトしますか？</h2>
-
-            <form action="${logoutUrl}" method="post">
-                <input type="hidden"
-                       name="csrfToken"
-                       value="${sessionScope.csrfToken}">
-
-                <div>
-                    <button type="button"
-                            class="plain-button"
-                            id="logoutCancel"
-                            onclick="closeLogoutDialog()">
-                        キャンセル
-                    </button>
-
-                    <button type="submit"
-                            class="delete-button">
-                        ログアウト
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        const logoutModal =
-                document.getElementById("logout-dialog");
-        let previousFocus = null;
-
-        function openLogoutDialog() {
-            previousFocus = document.activeElement;
-            logoutModal.classList.add("show");
-            logoutModal.setAttribute("aria-hidden", "false");
-            document.getElementById("logoutCancel").focus();
-        }
-
-        function closeLogoutDialog() {
-            logoutModal.classList.remove("show");
-            logoutModal.setAttribute("aria-hidden", "true");
-
-            if (previousFocus) {
-                previousFocus.focus();
-            }
-        }
-
-        document.addEventListener("keydown", function (event) {
-            if (!logoutModal.classList.contains("show")) {
-                return;
-            }
-
-            if (event.key === "Escape") {
-                closeLogoutDialog();
-            }
-
-            if (event.key === "Tab") {
-                const buttons =
-                        logoutModal.querySelectorAll("button");
-                const firstButton = buttons[0];
-                const lastButton = buttons[buttons.length - 1];
-
-                if (event.shiftKey &&
-                    document.activeElement === firstButton) {
-                    event.preventDefault();
-                    lastButton.focus();
-                } else if (!event.shiftKey &&
-                           document.activeElement === lastButton) {
-                    event.preventDefault();
-                    firstButton.focus();
-                }
-            }
-        });
-    </script>
 </body>
 </html>

@@ -24,6 +24,16 @@ public class SafetyReport implements Serializable {
 
     // 回答日時
     private OffsetDateTime reportedAt;
+    
+ // 緯度・経度（未取得の場合はnull）
+    private Double latitude;
+    private Double longitude;
+
+    // 位置精度（メートル）
+    private Double locationAccuracy;
+
+    // 位置情報の取得日時
+    private OffsetDateTime locationAcquiredAt;
 
     public SafetyReport() {
     }
@@ -66,5 +76,37 @@ public class SafetyReport implements Serializable {
 
     public void setReportedAt(OffsetDateTime reportedAt) {
         this.reportedAt = reportedAt;
+    }
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public Double getLocationAccuracy() {
+        return locationAccuracy;
+    }
+
+    public void setLocationAccuracy(Double locationAccuracy) {
+        this.locationAccuracy = locationAccuracy;
+    }
+
+    public OffsetDateTime getLocationAcquiredAt() {
+        return locationAcquiredAt;
+    }
+
+    public void setLocationAcquiredAt(
+            OffsetDateTime locationAcquiredAt) {
+        this.locationAcquiredAt = locationAcquiredAt;
     }
 }

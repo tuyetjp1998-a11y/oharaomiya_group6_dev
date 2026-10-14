@@ -22,8 +22,7 @@
            value="/safety/student/Home.action" />
     <c:url var="moreUrl"
            value="/safety/student/More.action" />
-    <c:url var="logoutUrl"
-           value="/safety/auth/Logout.action" />
+    
     <c:url var="submitUrl"
       	   value="/safety/student/AnswerSubmit.action" />
 	<c:url var="dangerUrl"
@@ -32,12 +31,6 @@
     <div class="phone">
         <header class="phone-header">
             <div class="brand">AnpiLink</div>
-
-            <button type="button"
-                    class="logout"
-                    onclick="openLogoutDialog()">
-                ログアウト
-            </button>
         </header>
 
         <main class="page">
@@ -49,7 +42,8 @@
 
             <%-- 送信処理との連携が完了するまで無効にする --%>
             <div class="choices">
-    <form action="${submitUrl}" method="post">
+    <form action="${submitUrl}" method="post"
+    		class="answer-location-form">
         <input type="hidden"
                name="csrfToken"
                value="${sessionScope.answerCsrfToken}">
@@ -57,6 +51,14 @@
         <input type="hidden"
                name="status"
                value="SAFE">
+         <input type="hidden" name="latitude" value="">
+<input type="hidden" name="longitude" value="">
+<input type="hidden" name="locationAccuracy" value="">
+<input type="hidden" name="locationAcquiredAt" value="">
+
+<p class="muted location-message"
+   role="status"
+   aria-live="polite"></p>
 
         <button type="submit"
                 class="big safe choice-button">
@@ -70,6 +72,9 @@
     </a>
 </div>
         </main>
+        <footer class="app-footer mobile-footer">
+            ＠AnpiLink
+        </footer>
 
         <nav class="phone-tabs tabs two"
              aria-label="メインメニュー">
@@ -134,54 +139,7 @@
             </form>
         </div>
     </div>
-
-    <script>
-        const logoutModal =
-                document.getElementById("logout-dialog");
-        let previousFocus = null;
-
-        function openLogoutDialog() {
-            previousFocus = document.activeElement;
-            logoutModal.classList.add("show");
-            logoutModal.setAttribute("aria-hidden", "false");
-            document.getElementById("logoutCancel").focus();
-        }
-
-        function closeLogoutDialog() {
-            logoutModal.classList.remove("show");
-            logoutModal.setAttribute("aria-hidden", "true");
-
-            if (previousFocus) {
-                previousFocus.focus();
-            }
-        }
-
-        document.addEventListener("keydown", function (event) {
-            if (!logoutModal.classList.contains("show")) {
-                return;
-            }
-
-            if (event.key === "Escape") {
-                closeLogoutDialog();
-            }
-
-            if (event.key === "Tab") {
-                const buttons =
-                        logoutModal.querySelectorAll("button");
-                const firstButton = buttons[0];
-                const lastButton = buttons[buttons.length - 1];
-
-                if (event.shiftKey &&
-                    document.activeElement === firstButton) {
-                    event.preventDefault();
-                    lastButton.focus();
-                } else if (!event.shiftKey &&
-                           document.activeElement === lastButton) {
-                    event.preventDefault();
-                    firstButton.focus();
-                }
-            }
-        });
-    </script>
+    
+   <script src="${pageContext.request.contextPath}/js/answer-location.js?v=20261014-1"></script> 
 </body>
 </html>
