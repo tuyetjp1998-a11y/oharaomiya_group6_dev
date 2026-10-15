@@ -23,7 +23,12 @@ public class HomeAction extends Action {
 
         // DBからデータ取得 3
         // なし
-
+        if (!"GET".equalsIgnoreCase(req.getMethod())) {
+            res.setHeader("Allow", "GET");
+            res.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+            return;
+        }
+        
         // ビジネスロジック 4
         if (user == null) {
             res.sendRedirect(req.getContextPath()

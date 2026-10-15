@@ -42,8 +42,10 @@
 
             <%-- 送信処理との連携が完了するまで無効にする --%>
             <div class="choices">
-    <form action="${submitUrl}" method="post"
-    		class="answer-location-form">
+    <form action="${submitUrl}"
+      		method="post"
+      		class="answer-location-form"
+      		data-location-enabled="${sessionScope.user.locationEnabled}">
         <input type="hidden"
                name="csrfToken"
                value="${sessionScope.answerCsrfToken}">
@@ -139,7 +141,6 @@
             </form>
         </div>
     </div>
-    
-   <script src="${pageContext.request.contextPath}/js/answer-location.js?v=20261014-1"></script> 
+<script src="${pageContext.request.contextPath}/js/answer-location.js?v=20261015-1"></script>    
 </body>
 </html>

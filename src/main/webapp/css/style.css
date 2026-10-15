@@ -2960,3 +2960,29 @@ button,input,select,textarea {
     opacity: 0.6;
     cursor: wait;
 }
+
+/* 保護者ホーム：未実装の操作 */
+.phone > .page > .primary:disabled {
+    width: 100%;
+    opacity: 0.6;
+    cursor: default;
+}
+
+.phone-tabs a[aria-disabled="true"] {
+    cursor: default;
+}
+
+/* 職員ポータルのフッター */
+.portal-footer {
+    margin: 28px 12px 0;
+    padding: 12px 0;
+    color: #617991;
+    font-size: 13px;
+    line-height: 20px;
+    text-align: center;
+}
+
+.portal-nav .nav-item[aria-disabled="true"] {
+    cursor: default;
+}
+

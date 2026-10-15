@@ -4,6 +4,7 @@ import java.security.SecureRandom;
 import java.util.Base64;
 
 import bean.User;
+import dao.UserDao;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -51,6 +52,9 @@ public class DangerAction extends Action {
             res.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
+        // 回答画面を開く際に最新の設定を取得
+        user.setLocationEnabled(
+                new UserDao().getLocationEnabled(user.getId()));
 
         // 安否回答用のCSRFトークンを準備
         if (session.getAttribute("answerCsrfToken") == null) {

@@ -7,6 +7,7 @@ import java.util.Set;
 import bean.SafetyReport;
 import bean.User;
 import dao.SafetyReportDao;
+import dao.UserDao;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -114,12 +115,18 @@ public class AnswerSubmitAction extends Action {
             return;
         }
 
-        // 位置情報は全項目未取得、または全項目取得済みとする
-        boolean noLocation =
-                isBlank(latitudeParam)
-                && isBlank(longitudeParam)
-                && isBlank(accuracyParam)
-                && isBlank(acquiredAtParam);
+	     // フォームの値ではなくDBの最新設定を使用
+	        boolean locationEnabled =
+	                new UserDao().getLocationEnabled(user.getId());
+	
+	        boolean noLocation =
+	                !locationEnabled
+	                || (
+	                    isBlank(latitudeParam)
+	                    && isBlank(longitudeParam)
+	                    && isBlank(accuracyParam)
+	                    && isBlank(acquiredAtParam)
+	                );
 
         if (!noLocation) {
             if (isBlank(latitudeParam)

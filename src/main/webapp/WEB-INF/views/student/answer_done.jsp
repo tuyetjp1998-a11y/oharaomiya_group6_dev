@@ -99,6 +99,9 @@
                 ホームへ
             </a>
         </main>
+        <footer class="app-footer mobile-footer">
+            ＠AnpiLink
+        </footer>
 
         <nav class="phone-tabs tabs two"
              aria-label="メインメニュー">
@@ -133,6 +136,6 @@
     </div>
 
     
-   
+<script src="${pageContext.request.contextPath}/js/answer-location.js?v=20261015-1"></script>  
 </body>
 </html>

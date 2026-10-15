@@ -1,6 +1,7 @@
 package safety.student;
 
 import bean.User;
+import dao.UserDao;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -51,12 +52,23 @@ public class SettingsAction extends Action {
                     HttpServletResponse.SC_FORBIDDEN);
             return;
         }
+        
+     // DBから最新の設定を取得
+        boolean locationEnabled =
+                new UserDao().getLocationEnabled(user.getId());
 
+        user.setLocationEnabled(locationEnabled);
+        req.setAttribute("locationEnabled", locationEnabled);
         // DBへデータ保存 5
         // なし
 
         // レスポンス値をセット 6
-        // なし
+        if (Boolean.TRUE.equals(
+                session.getAttribute("settingsSaved"))) {
+
+            req.setAttribute("settingsSaved", true);
+            session.removeAttribute("settingsSaved");
+        }
 
         // JSPへフォワード 7
         req.getRequestDispatcher(

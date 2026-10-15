@@ -1,0 +1,154 @@
+:root {
+  color-scheme: light;
+  --navy: #16304e;
+  --blue: #2866c9;
+  --background: #f3f6fb;
+  --border: #e0e8f2;
+  --muted: #617991;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100svh;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+  color: var(--navy);
+  font-family: "Yu Gothic", "Meiryo", sans-serif;
+  line-height: 1.7;
+}
+
+.app-header {
+  min-height: 76px;
+  padding: 18px 24px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.4;
+  letter-spacing: 0.3px;
+}
+
+.error-main {
+  width: 100%;
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 48px 24px;
+}
+
+.error-card {
+  width: 100%;
+  max-width: 600px;
+  padding: 48px 40px;
+  text-align: center;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 12px 36px rgb(22 48 78 / 4%);
+}
+
+.error-code {
+  width: fit-content;
+  min-width: 64px;
+  margin: 0 auto 24px;
+  padding: 5px 16px;
+  color: var(--blue);
+  background: #eaf2ff;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.error-card h1 {
+  margin: 0;
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.error-message {
+  margin: 18px 0 32px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+  text-wrap: balance;
+}
+
+.primary-button {
+  width: 100%;
+  max-width: 280px;
+  min-height: 52px;
+  margin: 0 auto;
+  padding: 13px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--blue);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.6;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.primary-button:hover {
+  background: #2058b4;
+}
+
+.primary-button:focus-visible,
+.preview-link:focus-visible {
+  outline: 3px solid #16304e;
+  outline-offset: 4px;
+}
+
+.app-footer {
+  flex-shrink: 0;
+  padding: 16px 24px 24px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+@media (max-width: 640px) {
+  .brand {
+    font-size: 22px;
+  }
+
+  .error-main {
+    padding: 32px 20px;
+  }
+
+  .error-card {
+    padding: 32px 24px;
+    border-radius: 16px;
+  }
+
+  .error-card h1 {
+    font-size: 22px;
+  }
+
+  .error-message {
+    font-size: 14px;
+  }
+}

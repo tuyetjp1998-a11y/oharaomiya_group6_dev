@@ -27,7 +27,9 @@ public class User implements Serializable {
 
     // 登録日時
     private OffsetDateTime createdAt;
-
+    
+    // 位置情報の利用設定
+    private boolean locationEnabled;
     public User() {
     }
 
@@ -77,5 +79,13 @@ public class User implements Serializable {
 
     public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+    
+    public boolean isLocationEnabled() {
+        return locationEnabled;
+    }
+
+    public void setLocationEnabled(boolean locationEnabled) {
+        this.locationEnabled = locationEnabled;
     }
 }

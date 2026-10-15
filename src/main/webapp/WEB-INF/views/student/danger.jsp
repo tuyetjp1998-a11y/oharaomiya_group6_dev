@@ -40,8 +40,10 @@
                 ← 戻る
             </a>
 
-            <form action="${submitUrl}" method="post"
-            		class="answer-location-form">
+            <form action="${submitUrl}"
+      				method="post"
+     				class="answer-location-form"
+      				data-location-enabled="${sessionScope.user.locationEnabled}">
                 <input type="hidden"
                        name="csrfToken"
                        value="${sessionScope.answerCsrfToken}">
@@ -51,9 +53,9 @@
                        value="DANGER">
                  
                  <input type="hidden" name="latitude" value="">
-<input type="hidden" name="longitude" value="">
-<input type="hidden" name="locationAccuracy" value="">
-<input type="hidden" name="locationAcquiredAt" value="">
+				 <input type="hidden" name="longitude" value="">
+				 <input type="hidden" name="locationAccuracy" value="">
+				 <input type="hidden" name="locationAcquiredAt" value="">
 
 <p class="muted location-message"
    role="status"

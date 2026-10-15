@@ -11,107 +11,235 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1">
 
-    <title>教員ホーム | 学校安否確認</title>
+    <title>職員ホーム | AnpiLink</title>
 
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/css/style.css">
+          href="${pageContext.request.contextPath}/css/style.css?v=20261015-2">
 </head>
-<body>
+<body class="a">
+    <%-- 遷移先URL --%>
     <c:url var="homeUrl"
            value="/safety/teacher/Home.action" />
-     
     <c:url var="logoutUrl"
            value="/safety/auth/Logout.action" />
 
-    <header class="stafftop">
-        <div class="brand">学校安否確認</div>
+    <header class="portal-header">
+        <div class="brand">AnpiLink</div>
 
-        <div class="header-user">
+        <div class="portal-user">
+            <span class="user-dot" aria-hidden="true">教</span>
+
             <span>
-                <c:out value="${user.name}" />先生
+                <c:out value="${sessionScope.user.name}" />先生
             </span>
 
             <button type="button"
                     class="logout"
+                    id="logoutOpen"
                     onclick="openLogoutDialog()">
                 ログアウト
             </button>
         </div>
     </header>
 
-    <div class="stafflayout">
-        
-        <aside class="side">
-    <a class="on"
-       href="${homeUrl}"
-       aria-current="page">
-        ホーム
-    </a>
+    <div class="portal-layout">
+        <aside class="portal-nav">
+            <span class="nav-caption">職員ポータル</span>
 
-    <%-- 遷移先は未実装のため、リンク先を設定しない --%>
-    <a aria-disabled="true">回答状況</a>
-    <a aria-disabled="true">安否確認を配信</a>
-    <a aria-disabled="true">回答履歴</a>
-</aside>
+            <a class="nav-item active"
+               href="${homeUrl}"
+               aria-current="page">
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7" />
+                </svg>
+                <span>ホーム</span>
+            </a>
 
-        <main class="main">
-            <h1>教員ホーム</h1>
+            <%-- 未実装のメニュー --%>
+            <a class="nav-item"
+               role="link"
+               aria-disabled="true">
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <path d="m5 12 4 4L19 6" />
+                </svg>
+                <span>回答状況</span>
+            </a>
 
-            <div class="stats">
-                <div class="stat">
-                    <small>回答済み</small>
-                    <strong>—</strong>
+            <a class="nav-item"
+               role="link"
+               aria-disabled="true">
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <circle cx="9" cy="8" r="3" />
+                    <path d="M3 20v-3a6 6 0 0 1 12 0v3M17 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 5" />
+                </svg>
+                <span>グループ</span>
+            </a>
+
+            <a class="nav-item"
+               role="link"
+               aria-disabled="true">
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <path d="M3 11a9 9 0 1 1 2 7M3 4v7h7M12 7v6l4 2" />
+                </svg>
+                <span>回答履歴</span>
+            </a>
+
+            <div class="class-card">
+                <span>担当クラス</span>
+                <strong>—</strong>
+                <small>クラス情報の表示は準備中です。</small>
+            </div>
+
+            <footer class="app-footer portal-footer">
+                ＠AnpiLink
+            </footer>
+        </aside>
+
+        <main class="portal-main">
+            <div class="portal-heading">
+                <div>
+                    <p class="eyebrow">職員ホーム</p>
+                    <h1>担当クラスの安否状況</h1>
                 </div>
 
-                <div class="stat">
-                    <small>未回答</small>
-                    <strong>—</strong>
-                </div>
-
-                <div class="stat">
-                    <small>危険</small>
-                    <strong style="color: #c94747">—</strong>
+                <div class="portal-date">
+                    —
+                    <span>最終回答：未取得</span>
                 </div>
             </div>
 
-            <p class="muted">
-                集計機能は準備中です。
-            </p>
+            <section class="stats">
+                <div class="stat">
+                    <span>回答済み</span>
 
-            <section class="alarm">
-                <div class="alarm-title">
-                    ⚠ 危険状態の生徒
+                    <div>
+                        <strong>—</strong>
+                        <small>人</small>
+                    </div>
+
+                    <p>集計機能は準備中です。</p>
                 </div>
 
-                <p class="muted">
-                    危険状態の生徒を表示する機能は準備中です。
-                </p>
+                <div class="stat">
+                    <span>未回答</span>
+
+                    <div>
+                        <strong>—</strong>
+                        <small>人</small>
+                    </div>
+
+                    <p>集計機能は準備中です。</p>
+                </div>
+
+                <div class="stat danger-stat">
+                    <span>危険</span>
+
+                    <div>
+                        <strong>—</strong>
+                        <small>人</small>
+                    </div>
+
+                    <p>集計機能は準備中です。</p>
+                </div>
             </section>
 
-            <section class="table">
-                <div class="row">
-                    <b>最新の安否回答</b>
-                </div>
+            <div class="portal-content">
+                <section class="alarm-panel">
+                    <div class="section-heading">
+                        <h2>
+                            <svg viewBox="0 0 24 24"
+                                 aria-hidden="true"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 stroke-width="1.7"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round">
+                                <path d="m12 3 10 18H2ZM12 9v5m0 3v.1" />
+                            </svg>
+                            危険状態の生徒
+                        </h2>
 
-                <div class="row">
-                    <span class="muted">
-                        安否回答を表示する機能は準備中です。
-                    </span>
-                </div>
-            </section>
+                        <span class="count">— 人</span>
+                    </div>
+
+                    <div class="danger-list">
+                        <p class="muted">
+                            危険状態の生徒を表示する機能は準備中です。
+                        </p>
+                    </div>
+                </section>
+
+                <section class="answers-panel">
+                    <div class="section-heading">
+                        <h2>最新の安否回答</h2>
+                    </div>
+
+                    <div class="table-scroll">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th scope="col">生徒</th>
+                                    <th scope="col">クラス</th>
+                                    <th scope="col">安否</th>
+                                    <th scope="col">回答時刻</th>
+                                    <th scope="col">
+                                        <span>詳細</span>
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <tr>
+                                    <td colspan="5" class="muted">
+                                        安否回答を表示する機能は準備中です。
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <div class="portal-foot">
+                担当クラス：未取得
+            </div>
         </main>
     </div>
-    
-     <%-- ログアウト確認ダイアログ --%>
+
+    <%-- ログアウト確認ダイアログ --%>
     <div class="modal"
-         id="logoutModal"
+         id="logout-dialog"
          role="dialog"
          aria-modal="true"
-         aria-labelledby="logoutTitle"
+         aria-labelledby="logout-title"
          aria-hidden="true">
 
         <div class="dialog">
-            <h2 id="logoutTitle">ログアウトしますか？</h2>
+            <h2 id="logout-title">ログアウトしますか？</h2>
 
             <form action="${logoutUrl}" method="post">
                 <input type="hidden"
@@ -120,13 +248,14 @@
 
                 <div>
                     <button type="button"
+                            class="plain-button"
                             id="logoutCancel"
                             onclick="closeLogoutDialog()">
                         キャンセル
                     </button>
 
                     <button type="submit"
-                            style="background: #c94747; color: white;">
+                            class="delete-button">
                         ログアウト
                     </button>
                 </div>
@@ -135,7 +264,9 @@
     </div>
 
     <script>
-        const logoutModal = document.getElementById("logoutModal");
+        const logoutModal =
+                document.getElementById("logout-dialog");
+
         let previousFocus = null;
 
         function openLogoutDialog() {
@@ -164,7 +295,9 @@
             }
 
             if (event.key === "Tab") {
-                const buttons = logoutModal.querySelectorAll("button");
+                const buttons =
+                        logoutModal.querySelectorAll("button");
+
                 const firstButton = buttons[0];
                 const lastButton = buttons[buttons.length - 1];
 

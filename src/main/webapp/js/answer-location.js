@@ -68,11 +68,18 @@ document.querySelectorAll(".answer-location-form")
                 sendAnswer();
             }
 
-            if (!window.isSecureContext
-                    || !navigator.geolocation) {
-                sendWithoutLocation();
-                return;
-            }
+            // OFFの場合は位置情報を取得せずに送信
+			if (form.dataset.locationEnabled !== "true") {
+			    message.textContent = "安否を送信しています…";
+			    sendAnswer();
+			    return;
+			}
+			
+			if (!window.isSecureContext
+			        || !navigator.geolocation) {
+			    sendWithoutLocation();
+			    return;
+			}
 
             navigator.geolocation.getCurrentPosition(
                 function (position) {

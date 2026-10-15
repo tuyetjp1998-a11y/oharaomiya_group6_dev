@@ -11,138 +11,97 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1">
 
-    <title>保護者ホーム | 学校安否確認</title>
+    <title>保護者ホーム | AnpiLink</title>
 
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/css/style.css">
+          href="${pageContext.request.contextPath}/css/style.css?v=20261015-1">
 </head>
-<body>
+<body class="a">
     <c:url var="homeUrl"
            value="/safety/family/Home.action" />
-    <c:url var="logoutUrl"
-           value="/safety/auth/Logout.action" />
+    <c:url var="moreUrl"
+           value="/safety/family/More.action" />
 
     <div class="phone">
-        <header class="top">
-            <div class="brand">学校安否確認</div>
-
-            <button type="button"
-                    class="logout"
-                    onclick="openLogoutDialog()">
-                ログアウト
-            </button>
+        <header class="phone-header">
+            <div class="brand">AnpiLink</div>
         </header>
 
-        <main class="home-only">
-            <div class="home-box">
-                <div class="who">保護者</div>
+        <main class="page">
+            <h1>保護者ホーム</h1>
 
-                <h1>
-                    <c:out value="${sessionScope.user.name}" />さん
-                </h1>
-
-                <%-- 保護者の回答画面は未接続 --%>
-                <a class="answer" aria-disabled="true">
-                    安否を回答
-                </a>
+            <div class="who">
+                保護者　
+                <c:out value="${sessionScope.user.name}" />さん
             </div>
+
+            <h2>お子さんの安否</h2>
+
+            <div class="card">
+                <p class="muted">
+                    お子さんの安否を表示する機能は準備中です。
+                </p>
+            </div>
+
+            <button type="button"
+                    class="primary group-submit"
+                    disabled>
+                お子さんのアカウントを代理登録
+            </button>
+
+            <p class="muted">
+                代理登録機能は準備中です。
+            </p>
         </main>
 
-        <nav class="tabs" aria-label="メインメニュー">
-            <a href="${homeUrl}" aria-current="page">
-                <b aria-hidden="true">●</b>
-                ホーム
+        <footer class="app-footer mobile-footer">
+            ＠AnpiLink
+        </footer>
+
+        <nav class="phone-tabs tabs"
+             aria-label="メインメニュー">
+            <a class="active"
+               href="${homeUrl}"
+               aria-current="page">
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7" />
+                </svg>
+                <span>ホーム</span>
             </a>
 
-            <a aria-disabled="true">
-                <b aria-hidden="true">人</b>
-                生徒回答
+            <a role="link" aria-disabled="true">
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <circle cx="9" cy="8" r="3" />
+                    <path d="M3 20v-3a6 6 0 0 1 12 0v3M17 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 5" />
+                </svg>
+                <span>お子さんの回答</span>
             </a>
 
-            <a aria-disabled="true">
-                <b aria-hidden="true">≡</b>
-                その他
+            <a href="${moreUrl}">
+                <svg viewBox="0 0 24 24"
+                     aria-hidden="true"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.7"
+                     stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <path d="M5 6h14M5 12h14M5 18h14" />
+                </svg>
+                <span>その他</span>
             </a>
         </nav>
     </div>
-
-    <%-- ログアウト確認ダイアログ --%>
-    <div class="modal"
-         id="logoutModal"
-         role="dialog"
-         aria-modal="true"
-         aria-labelledby="logoutTitle"
-         aria-hidden="true">
-
-        <div class="dialog">
-            <h2 id="logoutTitle">ログアウトしますか？</h2>
-
-            <form action="${logoutUrl}" method="post">
-                <input type="hidden"
-                       name="csrfToken"
-                       value="${sessionScope.csrfToken}">
-
-                <div>
-                    <button type="button"
-                            id="logoutCancel"
-                            onclick="closeLogoutDialog()">
-                        キャンセル
-                    </button>
-
-                    <button type="submit"
-                            style="background: #c94747; color: white;">
-                        ログアウト
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        const logoutModal = document.getElementById("logoutModal");
-        let previousFocus = null;
-
-        function openLogoutDialog() {
-            previousFocus = document.activeElement;
-            logoutModal.classList.add("show");
-            logoutModal.setAttribute("aria-hidden", "false");
-            document.getElementById("logoutCancel").focus();
-        }
-
-        function closeLogoutDialog() {
-            logoutModal.classList.remove("show");
-            logoutModal.setAttribute("aria-hidden", "true");
-
-            if (previousFocus) {
-                previousFocus.focus();
-            }
-        }
-
-        document.addEventListener("keydown", function (event) {
-            if (!logoutModal.classList.contains("show")) {
-                return;
-            }
-
-            if (event.key === "Escape") {
-                closeLogoutDialog();
-            }
-
-            if (event.key === "Tab") {
-                const buttons = logoutModal.querySelectorAll("button");
-                const firstButton = buttons[0];
-                const lastButton = buttons[buttons.length - 1];
-
-                if (event.shiftKey &&
-                    document.activeElement === firstButton) {
-                    event.preventDefault();
-                    lastButton.focus();
-                } else if (!event.shiftKey &&
-                           document.activeElement === lastButton) {
-                    event.preventDefault();
-                    firstButton.focus();
-                }
-            }
-        });
-    </script>
 </body>
 </html>

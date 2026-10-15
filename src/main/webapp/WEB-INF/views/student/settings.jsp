@@ -22,27 +22,65 @@
            value="/safety/student/Home.action" />
     <c:url var="moreUrl"
            value="/safety/student/More.action" />
-
+	<c:url var="settingsSaveUrl"
+       value="/safety/student/SettingsSave.action" />
+       
     <div class="phone">
         <header class="phone-header">
             <div class="brand">AnpiLink</div>
         </header>
 
         <main class="page">
-            <h1>設定</h1>
+    <h1>設定</h1>
 
-            <div class="card">
-                <div class="row">
-                    <span>位置情報の利用</span>
-                    <span class="muted">準備中</span>
-                </div>
+    <c:if test="${requestScope.settingsSaved}">
+        <p role="status">設定を保存しました。</p>
+    </c:if>
 
-                <div class="row">
-                    <span>通知</span>
-                    <span class="muted">準備中</span>
-                </div>
+    <form action="${settingsSaveUrl}" method="post">
+        <input type="hidden"
+               name="csrfToken"
+               value="${sessionScope.csrfToken}">
+
+        <div class="card">
+            <div class="row">
+                <label for="locationEnabled">
+                    位置情報の利用
+                </label>
+
+                <select id="locationEnabled"
+                        name="locationEnabled">
+                    <c:choose>
+                        <c:when test="${requestScope.locationEnabled}">
+                            <option value="true" selected>ON</option>
+                            <option value="false">OFF</option>
+                        </c:when>
+
+                        <c:otherwise>
+                            <option value="true">ON</option>
+                            <option value="false" selected>OFF</option>
+                        </c:otherwise>
+                    </c:choose>
+                </select>
             </div>
-        </main>
+
+            <div class="row">
+                <span>通知</span>
+                <span class="muted">準備中</span>
+            </div>
+        </div>
+
+        <p class="muted">
+            ONの場合、安否送信時に位置情報を取得します。
+            取得できない場合も安否は送信できます。
+        </p>
+
+        <button type="submit"
+                class="primary group-submit">
+            保存
+        </button>
+    </form>
+</main>
 
         <footer class="app-footer mobile-footer">
             ＠AnpiLink
