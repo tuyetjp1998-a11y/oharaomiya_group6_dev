@@ -36,7 +36,73 @@
             地図表示は準備中です。
         </div>
 
-        <p id="locationStatus" role="status" aria-live="polite">
+        <h2>最新の安否回答の位置情報</h2>
+
+        <c:choose>
+            <c:when test="${empty requestScope.latestReport}">
+                <p class="muted">
+                    安否回答はまだありません。
+                </p>
+            </c:when>
+
+            <c:otherwise>
+                <div class="row">
+                    <span>安否送信日時</span>
+                    <span>
+                        <c:out value="${requestScope.reportedAtText}" />
+                    </span>
+                </div>
+
+                <c:choose>
+                    <c:when test="${requestScope.latestReport.latitude ne null
+                                   and requestScope.latestReport.longitude ne null}">
+                        <div class="row">
+                            <span>緯度</span>
+                            <span>
+                                <c:out value="${requestScope.latestReport.latitude}" />
+                            </span>
+                        </div>
+
+                        <div class="row">
+                            <span>経度</span>
+                            <span>
+                                <c:out value="${requestScope.latestReport.longitude}" />
+                            </span>
+                        </div>
+
+                        <div class="row">
+                            <span>位置精度</span>
+                            <span>
+                                約
+                                <c:out value="${requestScope.latestReport.locationAccuracy}" />
+                                m
+                            </span>
+                        </div>
+
+                        <div class="row">
+                            <span>位置取得日時</span>
+                            <span>
+                                <c:out value="${requestScope.locationAcquiredAtText}" />
+                            </span>
+                        </div>
+                    </c:when>
+
+                    <c:otherwise>
+                        <p class="muted">
+                            最新の安否回答には位置情報がありません（未取得）。
+                        </p>
+                    </c:otherwise>
+                </c:choose>
+            </c:otherwise>
+        </c:choose>
+    </div>
+
+    <h2>現在地の確認</h2>
+
+    <div class="card">
+        <p id="locationStatus"
+           role="status"
+           aria-live="polite">
             未取得
         </p>
 
@@ -63,7 +129,8 @@
         </div>
 
         <p class="muted">
-            取得した位置情報は、この画面にのみ表示します。
+            ここで取得した現在地は画面表示のみで、
+            送信済みの位置情報は変更しません。
         </p>
     </div>
 
