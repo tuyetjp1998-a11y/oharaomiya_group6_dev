@@ -14,7 +14,7 @@
     <title>保護者ホーム | AnpiLink</title>
 
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/css/style.css?v=20261015-1">
+          href="${pageContext.request.contextPath}/css/style.css">
 </head>
 <body class="a">
     <c:url var="homeUrl"
@@ -37,28 +37,60 @@
 
             <h2>お子さんの安否</h2>
 
-            <div class="card">
-                <p class="muted">
-                    お子さんの安否を表示する機能は準備中です。
-                </p>
-            </div>
+<c:choose>
+    <c:when test="${empty requestScope.students}">
+        <p class="muted">
+            関連付けられている生徒はいません。
+        </p>
+    </c:when>
 
-            <button type="button"
-                    class="primary group-submit"
-                    disabled>
-                お子さんのアカウントを代理登録
-            </button>
+    <c:otherwise>
+        <c:forEach var="student"
+                   items="${requestScope.students}">
 
-            <p class="muted">
-                代理登録機能は準備中です。
-            </p>
+            <%-- 詳細画面は次の段階で連携する --%>
+            <c:url var="childDetailUrl"
+       value="/safety/family/ChildDetail.action">
+    <c:param name="studentId"
+             value="${student.studentUserId}" />
+</c:url>
+
+<a class="card child-card" href="${childDetailUrl}">
+                <b>
+                    <c:out value="${student.studentName}" />
+                </b>
+
+                <c:choose>
+                    <c:when test="${student.status eq 'SAFE'}">
+                        <span class="status-badge safe">
+                            無事
+                        </span>
+                    </c:when>
+
+                    <c:when test="${student.status eq 'DANGER'}">
+                        <span class="status-badge danger">
+                            危険
+                        </span>
+                    </c:when>
+
+                    <c:otherwise>
+                        <span class="status-badge">
+                            未回答
+                        </span>
+                    </c:otherwise>
+                </c:choose>
+                <span aria-hidden="true">›</span>
+</a>
+        </c:forEach>
+    </c:otherwise>
+</c:choose>
         </main>
 
         <footer class="app-footer mobile-footer">
             ＠AnpiLink
         </footer>
 
-        <nav class="phone-tabs tabs"
+        <nav class="phone-tabs tabs two"
              aria-label="メインメニュー">
             <a class="active"
                href="${homeUrl}"
@@ -72,21 +104,8 @@
                      stroke-linejoin="round">
                     <path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7" />
                 </svg>
-                <span>ホーム</span>
-            </a>
 
-            <a role="link" aria-disabled="true">
-                <svg viewBox="0 0 24 24"
-                     aria-hidden="true"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.7"
-                     stroke-linecap="round"
-                     stroke-linejoin="round">
-                    <circle cx="9" cy="8" r="3" />
-                    <path d="M3 20v-3a6 6 0 0 1 12 0v3M17 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 5" />
-                </svg>
-                <span>お子さんの回答</span>
+                <span>ホーム</span>
             </a>
 
             <a href="${moreUrl}">
@@ -99,6 +118,7 @@
                      stroke-linejoin="round">
                     <path d="M5 6h14M5 12h14M5 18h14" />
                 </svg>
+
                 <span>その他</span>
             </a>
         </nav>

@@ -114,7 +114,7 @@
 
                 <%-- 新規登録機能の接続までは無効にする --%>
                 <a class="register-link" aria-disabled="true">
-                    新規登録
+                    新規登録（保護者）
                 </a>
             </div>
         </section>

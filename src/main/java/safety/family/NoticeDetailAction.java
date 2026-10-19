@@ -1,0 +1,65 @@
+package safety.family;
+
+import bean.User;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import tool.Action;
+
+/**
+ * 保護者向けの連絡詳細を表示する。
+ */
+public class NoticeDetailAction extends Action {
+
+    @Override
+    public void execute(HttpServletRequest req,
+            HttpServletResponse res) throws Exception {
+
+        // ローカル変数の宣言 1
+        HttpSession session = req.getSession(false);
+        User user = session == null
+                ? null
+                : (User) session.getAttribute("user");
+
+        // リクエストパラメーターの取得 2
+        // なし（現在はサンプルの連絡を表示する）
+
+        // DBからデータ取得 3
+        // なし（画面連携確認用）
+
+        // ビジネスロジック 4
+        res.setHeader("Cache-Control", "no-store");
+
+        if (!"GET".equalsIgnoreCase(req.getMethod())) {
+            res.setHeader("Allow", "GET");
+            res.sendError(
+                    HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+            return;
+        }
+
+        if (user == null) {
+            res.sendRedirect(
+                    req.getContextPath()
+                    + "/safety/auth/Login.action");
+            return;
+        }
+
+        if (!user.isActive()
+                || !"FAMILY".equals(user.getRole())) {
+            res.sendError(
+                    HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+
+        // DBへデータ保存 5
+        // なし
+
+        // レスポンス値をセット 6
+        // なし
+
+        // JSPへフォワード 7
+        req.getRequestDispatcher(
+                "/WEB-INF/views/family/notice_detail.jsp")
+                .forward(req, res);
+    }
+}

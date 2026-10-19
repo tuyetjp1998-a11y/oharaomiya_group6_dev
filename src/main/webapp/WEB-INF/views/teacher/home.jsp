@@ -22,7 +22,9 @@
            value="/safety/teacher/Home.action" />
     <c:url var="logoutUrl"
            value="/safety/auth/Logout.action" />
-
+	<c:url var="familyRequestsUrl"
+       value="/safety/teacher/FamilyRequests.action" />
+       
     <header class="portal-header">
         <div class="brand">AnpiLink</div>
 
@@ -107,7 +109,22 @@
                 </svg>
                 <span>回答履歴</span>
             </a>
+		<a class="nav-item" href="${familyRequestsUrl}">
+    <svg viewBox="0 0 24 24"
+         aria-hidden="true"
+         fill="none"
+         stroke="currentColor"
+         stroke-width="1.7"
+         stroke-linecap="round"
+         stroke-linejoin="round">
+        <path d="M9 12l2 2 4-4" />
+        <rect x="4" y="3"
+              width="16" height="18"
+              rx="2" />
+    </svg>
 
+    <span>親子関係の承認</span>
+</a>
             <div class="class-card">
                 <span>担当クラス</span>
                 <strong>—</strong>

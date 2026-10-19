@@ -15,10 +15,12 @@
 	href="${pageContext.request.contextPath}/css/style.css">
 </head>
 <body class="a">
-	<%-- 遷移先URL --%>
 	<c:url var="homeUrl" value="/safety/family/Home.action" />
 	<c:url var="moreUrl" value="/safety/family/More.action" />
 	<c:url var="logoutUrl" value="/safety/auth/Logout.action" />
+	<c:url var="noticesUrl" value="/safety/family/Notices.action" />
+	<c:url var="settingsUrl" value="/safety/family/Settings.action" />
+
 	<div class="phone">
 		<header class="phone-header">
 			<div class="brand">AnpiLink</div>
@@ -28,14 +30,11 @@
 			<h1>その他</h1>
 
 			<div class="menu">
-				<a role="link" aria-disabled="true"> <b>学校からの連絡</b> <span
-					aria-hidden="true">›</span>
-				</a> <a role="link" aria-disabled="true"> <b>位置情報</b> <span
-					aria-hidden="true">›</span>
-				</a> <a role="link" aria-disabled="true"> <b>通信状態</b> <span
-					aria-hidden="true">›</span>
-				</a> <a role="link" aria-disabled="true"> <b>設定</b> <span
-					aria-hidden="true">›</span>
+				<%-- 各画面は次の段階で連携する --%>
+				<a href="${noticesUrl}"> <b>学校からの連絡</b> <span aria-hidden="true">›</span>
+				</a> 
+				
+				<a href="${settingsUrl}"> <b>設定</b> <span aria-hidden="true">›</span>
 				</a>
 
 				<button type="button" class="logout-menu"
@@ -43,8 +42,6 @@
 					<b>ログアウト</b> <span aria-hidden="true">›</span>
 				</button>
 			</div>
-
-			<p class="muted">保護者向けの各機能は準備中です。</p>
 		</main>
 
 		<footer class="app-footer mobile-footer"> ＠AnpiLink </footer>
@@ -87,22 +84,28 @@
 
 	<script>
 		const logoutModal = document.getElementById("logout-dialog");
+		const phone = document.querySelector(".phone");
 		let previousFocus = null;
 
 		function openLogoutDialog() {
 			previousFocus = document.activeElement;
+
+			phone.inert = true;
 			logoutModal.classList.add("show");
 			logoutModal.setAttribute("aria-hidden", "false");
+
 			document.getElementById("logoutCancel").focus();
 		}
 
 		function closeLogoutDialog() {
-			logoutModal.classList.remove("show");
-			logoutModal.setAttribute("aria-hidden", "true");
+			phone.inert = false;
 
 			if (previousFocus) {
 				previousFocus.focus();
 			}
+
+			logoutModal.classList.remove("show");
+			logoutModal.setAttribute("aria-hidden", "true");
 		}
 
 		document.addEventListener("keydown", function(event) {
@@ -111,6 +114,7 @@
 			}
 
 			if (event.key === "Escape") {
+				event.preventDefault();
 				closeLogoutDialog();
 			}
 

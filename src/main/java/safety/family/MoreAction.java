@@ -7,7 +7,7 @@ import jakarta.servlet.http.HttpSession;
 import tool.Action;
 
 /**
- * 保護者のその他画面を表示するAction。
+ * 保護者のその他画面を表示する。
  */
 public class MoreAction extends Action {
 
@@ -17,7 +17,9 @@ public class MoreAction extends Action {
 
         // ローカル変数の宣言 1
         HttpSession session = req.getSession(false);
-        User user = null;
+        User user = session == null
+                ? null
+                : (User) session.getAttribute("user");
 
         // リクエストパラメーターの取得 2
         // なし
@@ -35,12 +37,9 @@ public class MoreAction extends Action {
             return;
         }
 
-        if (session != null) {
-            user = (User) session.getAttribute("user");
-        }
-
         if (user == null) {
-            res.sendRedirect(req.getContextPath()
+            res.sendRedirect(
+                    req.getContextPath()
                     + "/safety/auth/Login.action");
             return;
         }
