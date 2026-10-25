@@ -3035,3 +3035,227 @@ button,input,select,textarea {
     white-space: nowrap;
     cursor: pointer;
 }
+
+/* 保護者の設定・追加申請・申請履歴 */
+.parent-settings-menu {
+  margin-top: 24px;
+}
+
+.parent-child-name {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.parent-child-name small,
+.parent-request-date {
+  color: var(--m);
+  font-size: 13px;
+}
+
+.parent-request-history {
+  display: grid;
+  gap: 16px;
+}
+
+.parent-request-history .card {
+  margin-top: 0;
+}
+
+.parent-request-history .request-heading b {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.parent-request-date {
+  margin: 12px 0 0;
+}
+
+.parent-settings-return {
+  display: block;
+  margin-top: 18px;
+  color: var(--b);
+  text-align: center;
+}
+
+/* 生徒カードと追加申請の状況の間隔 */
+.phone > .page > .child-card + .link-request-card {
+    margin-top: 16px;
+}
+
+/* 保護者の設定・追加申請・申請履歴 */
+.parent-settings-menu {
+  margin-top: 24px;
+}
+
+.parent-child-name {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.parent-child-name small,
+.parent-request-date {
+  color: var(--m);
+  font-size: 13px;
+}
+
+.parent-request-history {
+  display: grid;
+  gap: 16px;
+}
+
+.parent-request-history .card {
+  margin-top: 0;
+}
+
+.parent-request-history .request-heading b {
+  overflow-wrap: anywhere;
+  min-width: 0; 
+}
+
+.parent-request-date {
+  margin: 12px 0 0;
+}
+
+.parent-settings-return {
+  display: block;
+  margin-top: 18px;
+  color: var(--b);
+  text-align: center;
+}
+
+/* ========================================
+   既存機能の補足スタイル
+   ======================================== */
+
+/* 親子関係の申請：生徒IDと状態を並べる */
+.link-request-card .request-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.link-request-card .request-heading b {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* 承認待ち */
+.status-badge.request-pending {
+  color: #88600c;
+  background: #fff5dc;
+}
+
+/* 却下 */
+.status-badge.request-rejected {
+  color: #b73d4f;
+  background: #fff0f2;
+}
+
+/* 申請状況の説明 */
+.link-request-card p {
+  margin: 12px 0 0;
+  color: var(--m, #617991);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+/* 申請日 */
+.link-request-card .parent-request-date {
+  font-size: 13px;
+}
+
+/* ホーム：申請カード同士の間隔 */
+.phone > .page > .link-request-card + .link-request-card {
+  margin-top: 16px;
+}
+
+/* お子さんの追加申請ボタン */
+.request-form .primary {
+  width: 100%;
+  min-height: 48px;
+}
+
+/* 保護者の新規登録ボタン */
+.login-form .form .primary.group-submit {
+  width: 100%;
+  min-height: 48px;
+}
+
+/* 登録・追加申請のエラーメッセージ */
+.login-form .form-error,
+.request-form .form-error {
+  margin: 12px 0;
+  color: #b73d4f;
+  font-size: 14px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+/* キーボード操作時のフォーカス */
+.menu > button.logout-menu:focus-visible,
+.dialog button:focus-visible,
+.login-form .group-submit:focus-visible,
+.request-form .primary:focus-visible {
+  outline: 2px solid #2866c9;
+  outline-offset: 3px;
+}
+
+
+/* 通知設定の行 */
+.parent-notification-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+/* ON/OFFスイッチ */
+.parent-notification-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: 0 0 88px;
+    min-height: 44px;
+    padding: 6px 10px;
+    border: 2px solid #2463ad;
+    border-radius: 24px;
+    background: #2463ad;
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* 丸い部分 */
+.parent-notification-knob {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* ON */
+.parent-notification-toggle[aria-checked="true"]
+.parent-notification-knob {
+    order: 1;
+}
+
+/* OFF */
+.parent-notification-toggle[aria-checked="false"] {
+    background: #edf1f5;
+    border-color: #64748b;
+    color: #475569;
+}
+
+/* キーボード操作時 */
+.parent-notification-toggle:focus-visible {
+    outline: 3px solid #172e50;
+    outline-offset: 3px;
+}

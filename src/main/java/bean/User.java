@@ -30,6 +30,10 @@ public class User implements Serializable {
     
     // 位置情報の利用設定
     private boolean locationEnabled;
+    
+ // 子どもの安否回答に関する通知設定
+    private boolean notificationEnabled;
+    
     public User() {
     }
 
@@ -87,5 +91,13 @@ public class User implements Serializable {
 
     public void setLocationEnabled(boolean locationEnabled) {
         this.locationEnabled = locationEnabled;
+    }
+    
+    public boolean isNotificationEnabled() {
+        return notificationEnabled;
+    }
+
+    public void setNotificationEnabled(boolean notificationEnabled) {
+        this.notificationEnabled = notificationEnabled;
     }
 }

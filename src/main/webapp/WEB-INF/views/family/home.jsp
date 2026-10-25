@@ -1,127 +1,117 @@
 <%-- 保護者ホーム画面 --%>
-<%@ page language="java"
-         contentType="text/html; charset=UTF-8"
-         pageEncoding="UTF-8" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="jakarta.tags.core"%>
 
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>保護者ホーム | AnpiLink</title>
+<title>保護者ホーム | AnpiLink</title>
 
-    <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/css/style.css">
+<link rel="stylesheet"
+	href="${pageContext.request.contextPath}/css/style.css">
 </head>
 <body class="a">
-    <c:url var="homeUrl"
-           value="/safety/family/Home.action" />
-    <c:url var="moreUrl"
-           value="/safety/family/More.action" />
+	<c:url var="homeUrl" value="/safety/family/Home.action" />
+	<c:url var="moreUrl" value="/safety/family/More.action" />
 
-    <div class="phone">
-        <header class="phone-header">
-            <div class="brand">AnpiLink</div>
-        </header>
+	<div class="phone">
+		<header class="phone-header">
+			<div class="brand">AnpiLink</div>
+		</header>
 
-        <main class="page">
-            <h1>保護者ホーム</h1>
+		<main class="page">
+			<h1>保護者ホーム</h1>
 
-            <div class="who">
-                保護者　
-                <c:out value="${sessionScope.user.name}" />さん
-            </div>
+			<div class="who">
+				保護者
+				<c:out value="${sessionScope.user.name}" />
+				さん
+			</div>
 
-            <h2>お子さんの安否</h2>
+			<h2>お子さんの安否</h2>
 
-<c:choose>
-    <c:when test="${empty requestScope.students}">
-        <p class="muted">
-            関連付けられている生徒はいません。
-        </p>
-    </c:when>
+			<%-- 承認済みの生徒の安否 --%>
+			<c:forEach var="student" items="${requestScope.students}">
 
-    <c:otherwise>
-        <c:forEach var="student"
-                   items="${requestScope.students}">
+				<c:url var="childDetailUrl"
+					value="/safety/family/ChildDetail.action">
+					<c:param name="studentId" value="${student.studentUserId}" />
+				</c:url>
 
-            <%-- 詳細画面は次の段階で連携する --%>
-            <c:url var="childDetailUrl"
-       value="/safety/family/ChildDetail.action">
-    <c:param name="studentId"
-             value="${student.studentUserId}" />
-</c:url>
+				<a class="card child-card" href="${childDetailUrl}"> <b> <c:out
+							value="${student.studentName}" />
+				</b> <c:choose>
+						<c:when test="${student.status eq 'SAFE'}">
+							<span class="status-badge safe">無事</span>
+						</c:when>
 
-<a class="card child-card" href="${childDetailUrl}">
-                <b>
-                    <c:out value="${student.studentName}" />
-                </b>
+						<c:when test="${student.status eq 'DANGER'}">
+							<span class="status-badge danger">危険</span>
+						</c:when>
 
-                <c:choose>
-                    <c:when test="${student.status eq 'SAFE'}">
-                        <span class="status-badge safe">
-                            無事
-                        </span>
-                    </c:when>
+						<c:otherwise>
+							<span class="status-badge">未回答</span>
+						</c:otherwise>
+					</c:choose> <span aria-hidden="true">›</span>
+				</a>
+			</c:forEach>
 
-                    <c:when test="${student.status eq 'DANGER'}">
-                        <span class="status-badge danger">
-                            危険
-                        </span>
-                    </c:when>
+			<%-- 承認待ちの追加申請 --%>
+			<c:forEach var="pending" items="${requestScope.pendingRequests}">
+				<section class="card link-request-card" aria-label="追加申請の状況">
 
-                    <c:otherwise>
-                        <span class="status-badge">
-                            未回答
-                        </span>
-                    </c:otherwise>
-                </c:choose>
-                <span aria-hidden="true">›</span>
-</a>
-        </c:forEach>
-    </c:otherwise>
-</c:choose>
-        </main>
+					<div class="request-heading">
+						<b> 生徒ID： <c:out value="${pending.studentLoginId}" />
+						</b> <span class="status-badge request-pending"> 承認待ち </span>
+					</div>
 
-        <footer class="app-footer mobile-footer">
-            ＠AnpiLink
-        </footer>
+					<p>教員の承認をお待ちください。</p>
+				</section>
+			</c:forEach>
 
-        <nav class="phone-tabs tabs two"
-             aria-label="メインメニュー">
-            <a class="active"
-               href="${homeUrl}"
-               aria-current="page">
-                <svg viewBox="0 0 24 24"
-                     aria-hidden="true"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.7"
-                     stroke-linecap="round"
-                     stroke-linejoin="round">
+			<%-- 却下された追加申請 --%>
+			<c:forEach var="rejected" items="${requestScope.rejectedRequests}">
+				<section class="card link-request-card" aria-label="追加申請の状況">
+
+					<div class="request-heading">
+						<b>お子さんの追加申請</b> <span class="status-badge request-rejected">
+							却下 </span>
+					</div>
+
+					<p>親子関係を確認できませんでした。 学校へお問い合わせください。</p>
+				</section>
+			</c:forEach>
+
+			<%-- 承認済みの生徒も却下通知もない場合 --%>
+			<c:if
+				test="${empty requestScope.students
+              and empty requestScope.pendingRequests
+              and empty requestScope.rejectedRequests}">
+				<p class="muted">現在、安否情報を確認できる生徒はいません。
+					追加申請の状況は設定の「申請履歴」から確認できます。</p>
+			</c:if>
+		</main>
+
+		<footer class="app-footer mobile-footer"> ＠AnpiLink </footer>
+
+		<nav class="phone-tabs tabs two" aria-label="メインメニュー">
+			<a class="active" href="${homeUrl}" aria-current="page"> <svg
+					viewBox="0 0 24 24" aria-hidden="true" fill="none"
+					stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+					stroke-linejoin="round">
                     <path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7" />
-                </svg>
-
-                <span>ホーム</span>
-            </a>
-
-            <a href="${moreUrl}">
-                <svg viewBox="0 0 24 24"
-                     aria-hidden="true"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.7"
-                     stroke-linecap="round"
-                     stroke-linejoin="round">
+                </svg> <span>ホーム</span>
+			</a> <a href="${moreUrl}"> <svg viewBox="0 0 24 24"
+					aria-hidden="true" fill="none" stroke="currentColor"
+					stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M5 6h14M5 12h14M5 18h14" />
-                </svg>
-
-                <span>その他</span>
-            </a>
-        </nav>
-    </div>
+                </svg> <span>その他</span>
+			</a>
+		</nav>
+	</div>
 </body>
 </html>

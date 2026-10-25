@@ -3,8 +3,10 @@ package safety.family;
 import java.util.List;
 
 import bean.FamilyStudent;
+import bean.FamilyStudentRequest;
 import bean.User;
 import dao.FamilyStudentDao;
+import dao.FamilyStudentRequestDao;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -26,7 +28,12 @@ public class HomeAction extends Action {
                 : (User) session.getAttribute("user");
 
         FamilyStudentDao dao = new FamilyStudentDao();
+        FamilyStudentRequestDao requestDao =
+                new FamilyStudentRequestDao();
+
         List<FamilyStudent> students;
+        List<FamilyStudentRequest> pendingRequests;
+        List<FamilyStudentRequest> rejectedRequests;
 
         // リクエストパラメーターの取得 2
         // なし
@@ -58,14 +65,22 @@ public class HomeAction extends Action {
             return;
         }
 
-        // ログイン中の保護者に関連付けられた生徒を取得
+        // 承認済みの生徒と申請状況を取得
         students = dao.findByFamilyUserId(user.getId());
+
+        pendingRequests =
+                requestDao.findPendingByFamilyUserId(user.getId());
+
+        rejectedRequests =
+                requestDao.findLatestRejected(user.getId());
 
         // DBへデータ保存 5
         // なし
 
         // レスポンス値をセット 6
         req.setAttribute("students", students);
+        req.setAttribute("pendingRequests", pendingRequests);
+        req.setAttribute("rejectedRequests", rejectedRequests);
 
         // JSPへフォワード 7
         req.getRequestDispatcher(

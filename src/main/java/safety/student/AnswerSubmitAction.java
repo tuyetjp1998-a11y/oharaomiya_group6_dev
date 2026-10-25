@@ -2,206 +2,286 @@ package safety.student;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import bean.SafetyReport;
 import bean.User;
+import bean.WebPushSubscription;
 import dao.SafetyReportDao;
 import dao.UserDao;
+import dao.WebPushSubscriptionDao;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import tool.Action;
+import tool.WebPushSender;
 
 /**
  * 安否回答と位置情報を登録するAction。
  */
 public class AnswerSubmitAction extends Action {
+	private static final Logger LOGGER = Logger.getLogger(AnswerSubmitAction.class.getName());
 
-    private static final Set<String> DANGER_TYPES = Set.of(
-            "ACCIDENT",
-            "EARTHQUAKE",
-            "FIRE",
-            "LANDSLIDE",
-            "STALKING");
+	private static final Set<String> DANGER_TYPES = Set.of(
+			"ACCIDENT",
+			"EARTHQUAKE",
+			"FIRE",
+			"LANDSLIDE",
+			"STALKING");
 
-    @Override
-    public void execute(HttpServletRequest req,
-            HttpServletResponse res) throws Exception {
+	@Override
+	public void execute(HttpServletRequest req,
+			HttpServletResponse res) throws Exception {
 
-        // ローカル変数の宣言 1
-        HttpSession session = req.getSession(false);
-        User user = null;
-        SafetyReport report = new SafetyReport();
-        SafetyReportDao dao = new SafetyReportDao();
-        String sessionToken;
-        boolean saved;
+		// ローカル変数の宣言 1
+		HttpSession session = req.getSession(false);
+		User user = null;
+		SafetyReport report = new SafetyReport();
+		SafetyReportDao dao = new SafetyReportDao();
+		String sessionToken;
+		boolean saved;
 
-        // リクエストパラメーターの取得 2
-        req.setCharacterEncoding("UTF-8");
+		// リクエストパラメーターの取得 2
+		req.setCharacterEncoding("UTF-8");
 
-        String status = req.getParameter("status");
-        String dangerType = req.getParameter("dangerType");
-        String csrfToken = req.getParameter("csrfToken");
+		String status = req.getParameter("status");
+		String dangerType = req.getParameter("dangerType");
+		String csrfToken = req.getParameter("csrfToken");
 
-        String latitudeParam = req.getParameter("latitude");
-        String longitudeParam = req.getParameter("longitude");
-        String accuracyParam =
-                req.getParameter("locationAccuracy");
-        String acquiredAtParam =
-                req.getParameter("locationAcquiredAt");
+		String latitudeParam = req.getParameter("latitude");
+		String longitudeParam = req.getParameter("longitude");
+		String accuracyParam = req.getParameter("locationAccuracy");
+		String acquiredAtParam = req.getParameter("locationAcquiredAt");
 
-        // DBからデータ取得 3
-        // なし
+		// DBからデータ取得 3
+		// なし
 
-        // ビジネスロジック 4
-        res.setHeader("Cache-Control", "no-store");
+		// ビジネスロジック 4
+		res.setHeader("Cache-Control", "no-store");
 
-        if (!"POST".equalsIgnoreCase(req.getMethod())) {
-            res.setHeader("Allow", "POST");
-            res.sendError(
-                    HttpServletResponse.SC_METHOD_NOT_ALLOWED);
-            return;
-        }
+		if (!"POST".equalsIgnoreCase(req.getMethod())) {
+			res.setHeader("Allow", "POST");
+			res.sendError(
+					HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+			return;
+		}
 
-        if (session != null) {
-            user = (User) session.getAttribute("user");
-        }
+		if (session != null) {
+			user = (User) session.getAttribute("user");
+		}
 
-        if (user == null) {
-            res.sendRedirect(req.getContextPath()
-                    + "/safety/auth/Login.action");
-            return;
-        }
+		if (user == null) {
+			res.sendRedirect(req.getContextPath()
+					+ "/safety/auth/Login.action");
+			return;
+		}
 
-        if (!user.isActive()
-                || !"STUDENT".equals(user.getRole())) {
-            res.sendError(
-                    HttpServletResponse.SC_FORBIDDEN);
-            return;
-        }
+		if (!user.isActive()
+				|| !"STUDENT".equals(user.getRole())) {
+			res.sendError(
+					HttpServletResponse.SC_FORBIDDEN);
+			return;
+		}
 
-        sessionToken =
-                (String) session.getAttribute("answerCsrfToken");
+		sessionToken = (String) session.getAttribute("answerCsrfToken");
 
-        if (sessionToken == null
-                || !sessionToken.equals(csrfToken)) {
-            res.sendError(
-                    HttpServletResponse.SC_FORBIDDEN);
-            return;
-        }
+		if (sessionToken == null
+				|| !sessionToken.equals(csrfToken)) {
+			res.sendError(
+					HttpServletResponse.SC_FORBIDDEN);
+			return;
+		}
 
-        // 安否状況と危険の種類を検証
-        if ("SAFE".equals(status)) {
-            if (!isBlank(dangerType)) {
-                res.sendError(
-                        HttpServletResponse.SC_BAD_REQUEST);
-                return;
-            }
+		// 安否状況と危険の種類を検証
+		if ("SAFE".equals(status)) {
+			if (!isBlank(dangerType)) {
+				res.sendError(
+						HttpServletResponse.SC_BAD_REQUEST);
+				return;
+			}
 
-            dangerType = null;
+			dangerType = null;
 
-        } else if ("DANGER".equals(status)) {
-            if (dangerType == null
-                    || !DANGER_TYPES.contains(dangerType)) {
-                res.sendError(
-                        HttpServletResponse.SC_BAD_REQUEST);
-                return;
-            }
+		} else if ("DANGER".equals(status)) {
+			if (dangerType == null
+					|| !DANGER_TYPES.contains(dangerType)) {
+				res.sendError(
+						HttpServletResponse.SC_BAD_REQUEST);
+				return;
+			}
 
-        } else {
-            res.sendError(
-                    HttpServletResponse.SC_BAD_REQUEST);
-            return;
-        }
+		} else {
+			res.sendError(
+					HttpServletResponse.SC_BAD_REQUEST);
+			return;
+		}
 
-	     // フォームの値ではなくDBの最新設定を使用
-	        boolean locationEnabled =
-	                new UserDao().getLocationEnabled(user.getId());
-	
-	        boolean noLocation =
-	                !locationEnabled
-	                || (
-	                    isBlank(latitudeParam)
-	                    && isBlank(longitudeParam)
-	                    && isBlank(accuracyParam)
-	                    && isBlank(acquiredAtParam)
-	                );
+		// フォームの値ではなくDBの最新設定を使用
+		boolean locationEnabled = new UserDao().getLocationEnabled(user.getId());
 
-        if (!noLocation) {
-            if (isBlank(latitudeParam)
-                    || isBlank(longitudeParam)
-                    || isBlank(accuracyParam)
-                    || isBlank(acquiredAtParam)) {
-                res.sendError(
-                        HttpServletResponse.SC_BAD_REQUEST);
-                return;
-            }
+		boolean noLocation = !locationEnabled
+				|| (isBlank(latitudeParam)
+						&& isBlank(longitudeParam)
+						&& isBlank(accuracyParam)
+						&& isBlank(acquiredAtParam));
 
-            try {
-                double latitude =
-                        Double.parseDouble(latitudeParam);
-                double longitude =
-                        Double.parseDouble(longitudeParam);
-                double accuracy =
-                        Double.parseDouble(accuracyParam);
+		if (!noLocation) {
+			if (isBlank(latitudeParam)
+					|| isBlank(longitudeParam)
+					|| isBlank(accuracyParam)
+					|| isBlank(acquiredAtParam)) {
+				res.sendError(
+						HttpServletResponse.SC_BAD_REQUEST);
+				return;
+			}
 
-                OffsetDateTime acquiredAt =
-                        OffsetDateTime.parse(acquiredAtParam);
+			try {
+				double latitude = Double.parseDouble(latitudeParam);
+				double longitude = Double.parseDouble(longitudeParam);
+				double accuracy = Double.parseDouble(accuracyParam);
 
-                if (!Double.isFinite(latitude)
-                        || latitude < -90
-                        || latitude > 90
-                        || !Double.isFinite(longitude)
-                        || longitude < -180
-                        || longitude > 180
-                        || !Double.isFinite(accuracy)
-                        || accuracy < 0) {
-                    res.sendError(
-                            HttpServletResponse.SC_BAD_REQUEST);
-                    return;
-                }
+				OffsetDateTime acquiredAt = OffsetDateTime.parse(acquiredAtParam);
 
-                report.setLatitude(latitude);
-                report.setLongitude(longitude);
-                report.setLocationAccuracy(accuracy);
-                report.setLocationAcquiredAt(acquiredAt);
+				if (!Double.isFinite(latitude)
+						|| latitude < -90
+						|| latitude > 90
+						|| !Double.isFinite(longitude)
+						|| longitude < -180
+						|| longitude > 180
+						|| !Double.isFinite(accuracy)
+						|| accuracy < 0) {
+					res.sendError(
+							HttpServletResponse.SC_BAD_REQUEST);
+					return;
+				}
 
-            } catch (NumberFormatException
-                    | DateTimeParseException e) {
-                res.sendError(
-                        HttpServletResponse.SC_BAD_REQUEST);
-                return;
-            }
-        }
+				report.setLatitude(latitude);
+				report.setLongitude(longitude);
+				report.setLocationAccuracy(accuracy);
+				report.setLocationAcquiredAt(acquiredAt);
 
-        // 回答者はセッションから取得
-        report.setUserId(user.getId());
-        report.setStatus(status);
-        report.setDangerType(dangerType);
+			} catch (NumberFormatException
+					| DateTimeParseException e) {
+				res.sendError(
+						HttpServletResponse.SC_BAD_REQUEST);
+				return;
+			}
+		}
 
-        // DBへデータ保存 5
-        saved = dao.save(report);
+		// 回答者はセッションから取得
+		report.setUserId(user.getId());
+		report.setStatus(status);
+		report.setDangerType(dangerType);
 
-        if (!saved) {
-            res.sendError(
-                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            return;
-        }
+		// DBへデータ保存 5
+		saved = dao.save(report);
 
-        // レスポンス値をセット 6
-        String doneUrl = req.getContextPath()
-                + "/safety/student/AnswerDone.action?id="
-                + report.getId();
+		if (!saved) {
+			res.sendError(
+					HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			return;
+		}
 
-        // 完了画面へリダイレクト 7
-        res.setStatus(HttpServletResponse.SC_SEE_OTHER);
-        res.setHeader(
-                "Location",
-                res.encodeRedirectURL(doneUrl));
-    }
+		// 回答保存後に、関連する保護者へ通知する
+		notifyFamilies(user.getId());
 
-    private boolean isBlank(String value) {
-        return value == null || value.isBlank();
-    }
+		// レスポンス値をセット 6
+		String doneUrl = req.getContextPath()
+				+ "/safety/student/AnswerDone.action?id="
+				+ report.getId();
+
+		// 完了画面へリダイレクト 7
+		res.setStatus(HttpServletResponse.SC_SEE_OTHER);
+		res.setHeader(
+				"Location",
+				res.encodeRedirectURL(doneUrl));
+	}
+
+	/**
+	 * 関連する保護者へ安否回答の通知を送信する。
+	 * 通知に失敗しても、保存済みの回答には影響させない。
+	 */
+	private void notifyFamilies(long studentUserId) {
+
+		try {
+			WebPushSubscriptionDao subscriptionDao = new WebPushSubscriptionDao();
+
+			List<WebPushSubscription> subscriptions = subscriptionDao.findByStudentUserId(
+					studentUserId);
+
+			// 通知対象がない場合は終了する
+			if (subscriptions.isEmpty()) {
+				return;
+			}
+
+			WebPushSender sender = new WebPushSender();
+
+			for (WebPushSubscription subscription : subscriptions) {
+
+				try {
+					int statusCode = sender.send(subscription);
+
+					if (statusCode >= 200
+							&& statusCode < 300) {
+
+						// Pushサービスによる受付完了
+						LOGGER.log(
+								Level.INFO,
+								"Web Push受付成功: 登録ID={0}",
+								subscription.getId());
+
+					} else if (statusCode == 410) {
+
+						// 有効期限切れの通知登録を削除する
+						boolean deleted = subscriptionDao.deleteExpired(
+								subscription);
+
+						LOGGER.log(
+								Level.INFO,
+								"期限切れWeb Push登録: 登録ID={0}, 削除={1}",
+								new Object[] {
+										subscription.getId(),
+										deleted
+								});
+
+					} else {
+
+						// endpointや認証情報はログに出力しない
+						LOGGER.log(
+								Level.WARNING,
+								"Web Push受付失敗: 登録ID={0}, HTTP={1}",
+								new Object[] {
+										subscription.getId(),
+										statusCode
+								});
+					}
+
+				} catch (Exception e) {
+
+					// 他の通知先への送信は継続する
+					LOGGER.log(
+							Level.WARNING,
+							"Web Push送信失敗: 登録ID={0}, 例外={1}",
+							new Object[] {
+									subscription.getId(),
+									e.getClass().getSimpleName()
+							});
+				}
+			}
+
+		} catch (Exception e) {
+
+			LOGGER.log(
+					Level.WARNING,
+					"保護者通知処理失敗: 例外={0}",
+					e.getClass().getSimpleName());
+		}
+	}
+
+	private boolean isBlank(String value) {
+		return value == null || value.isBlank();
+	}
 }

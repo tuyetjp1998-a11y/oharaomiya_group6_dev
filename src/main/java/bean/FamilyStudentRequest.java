@@ -81,6 +81,6 @@ public class FamilyStudentRequest implements Serializable {
 
 		return value.atZoneSameInstant(ZoneId.of("Asia/Tokyo"))
 				.format(DateTimeFormatter.ofPattern(
-						"yyyy/MM/dd HH:mm"));
+						"yyyy/MM/dd"));
 	}
 }

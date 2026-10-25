@@ -32,9 +32,7 @@
 			<div class="menu">
 				<%-- 各画面は次の段階で連携する --%>
 				<a href="${noticesUrl}"> <b>学校からの連絡</b> <span aria-hidden="true">›</span>
-				</a> 
-				
-				<a href="${settingsUrl}"> <b>設定</b> <span aria-hidden="true">›</span>
+				</a> <a href="${settingsUrl}"> <b>設定</b> <span aria-hidden="true">›</span>
 				</a>
 
 				<button type="button" class="logout-menu"
@@ -68,9 +66,12 @@
 		<div class="dialog">
 			<h2 id="logout-title">ログアウトしますか？</h2>
 
-			<form action="${logoutUrl}" method="post">
+			<form id="family-logout-form" action="${logoutUrl}" method="post">
 				<input type="hidden" name="csrfToken"
-					value="${sessionScope.csrfToken}">
+					value="${sessionScope.csrfToken}"> <input type="hidden"
+					id="logout-push-endpoint" name="pushEndpoint" value="">
+
+				<p id="logout-message" role="status"></p>
 
 				<div>
 					<button type="button" class="plain-button" id="logoutCancel"
@@ -133,6 +134,106 @@
 				}
 			}
 		});
+
+	    // このブラウザーの通知登録を解除してからログアウトする
+	    var logoutForm = document.getElementById(
+	        "family-logout-form"
+	    );
+	    var logoutEndpoint = document.getElementById(
+	        "logout-push-endpoint"
+	    );
+	    var logoutMessage = document.getElementById(
+	        "logout-message"
+	    );
+	    var logoutSubmitting = false;
+
+	    logoutForm.addEventListener("submit", function (event) {
+	        event.preventDefault();
+
+	        if (logoutSubmitting) {
+	            return;
+	        }
+
+	        logoutSubmitting = true;
+	        logoutMessage.textContent = "ログアウトしています...";
+
+	        var submitButton = logoutForm.querySelector(
+	            'button[type="submit"]'
+	        );
+
+	        submitButton.disabled = true;
+	        document.getElementById("logoutCancel").disabled = true;
+
+	        // Web Pushを利用できない環境では通常のログアウトを行う
+	        if (!window.isSecureContext
+	                || !("serviceWorker" in navigator)
+	                || !("PushManager" in window)) {
+	            HTMLFormElement.prototype.submit.call(logoutForm);
+	            return;
+	        }
+
+	        var registration = null;
+
+	        // アプリのService Workerだけを取得する
+	        navigator.serviceWorker.getRegistration(
+	            "${pageContext.request.contextPath}/"
+	        )
+	        .then(function (foundRegistration) {
+	            registration = foundRegistration;
+
+	            if (!registration) {
+	                return null;
+	            }
+
+	            return registration.pushManager.getSubscription();
+	        })
+	        .then(function (subscription) {
+	            if (!subscription) {
+	                return;
+	            }
+
+	            // サーバーで削除するため、解除前に送信先を保持する
+	            logoutEndpoint.value = subscription.endpoint;
+
+	            return subscription.unsubscribe()
+	            .then(function (unsubscribed) {
+	                if (!unsubscribed) {
+	                    throw new Error(
+	                        "通知登録を解除できませんでした。"
+	                    );
+	                }
+	            });
+	        })
+	        .then(function () {
+	            if (!registration) {
+	                return;
+	            }
+
+	            // すでに表示されている通知も閉じる
+	            return registration.getNotifications()
+	            .then(function (notifications) {
+	                notifications.forEach(function (notification) {
+	                    notification.close();
+	                });
+	            })
+	            .catch(function () {
+	                // 通知を閉じられなくてもログアウトは継続する
+	            });
+	        })
+	        .then(function () {
+	            // submitイベントを再実行せずPOSTする
+	            HTMLFormElement.prototype.submit.call(logoutForm);
+	        })
+	        .catch(function () {
+	            logoutSubmitting = false;
+	            submitButton.disabled = false;
+	            document.getElementById("logoutCancel").disabled = false;
+
+	            logoutMessage.textContent =
+	                "通知登録の解除に失敗しました。" +
+	                "もう一度ログアウトしてください。";
+	        });
+	    });
 	</script>
 </body>
 </html>

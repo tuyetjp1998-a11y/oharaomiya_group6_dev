@@ -3,10 +3,9 @@ package safety.family;
 import java.util.List;
 
 import bean.FamilyStudent;
-import bean.FamilyStudentRequest;
 import bean.User;
 import dao.FamilyStudentDao;
-import dao.FamilyStudentRequestDao;
+import dao.UserDao;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -17,75 +16,76 @@ import tool.Action;
  */
 public class SettingsAction extends Action {
 
-    @Override
-    public void execute(HttpServletRequest req,
-            HttpServletResponse res) throws Exception {
+	@Override
+	public void execute(HttpServletRequest req,
+			HttpServletResponse res) throws Exception {
 
-        // ローカル変数の宣言 1
-        HttpSession session = req.getSession(false);
-        User user = session == null
-                ? null
-                : (User) session.getAttribute("user");
+		// ローカル変数の宣言 1
+		UserDao userDao = new UserDao();
+		boolean notificationEnabled;
+		HttpSession session = req.getSession(false);
+		User user = session == null
+				? null
+				: (User) session.getAttribute("user");
 
-        FamilyStudentDao dao = new FamilyStudentDao();
-        List<FamilyStudent> students;
-        
-        FamilyStudentRequestDao requestDao =
-                new FamilyStudentRequestDao();
-        List<FamilyStudentRequest> pendingRequests;
-        List<FamilyStudentRequest> reviewedRequests;
-        // リクエストパラメーターの取得 2
-        // なし
+		FamilyStudentDao dao = new FamilyStudentDao();
+		List<FamilyStudent> students;
 
-        // DBからデータ取得 3
-        // 認証確認後に取得する
+		//		FamilyStudentRequestDao requestDao = new FamilyStudentRequestDao();
+		//		List<FamilyStudentRequest> pendingRequests;
+		//		List<FamilyStudentRequest> reviewedRequests;
+		// リクエストパラメーターの取得 2
+		// なし
 
-        // ビジネスロジック 4
-        res.setHeader("Cache-Control", "no-store");
+		// DBからデータ取得 3
+		// 認証確認後に取得する
 
-        if (!"GET".equalsIgnoreCase(req.getMethod())) {
-            res.setHeader("Allow", "GET");
-            res.sendError(
-                    HttpServletResponse.SC_METHOD_NOT_ALLOWED);
-            return;
-        }
+		// ビジネスロジック 4
+		res.setHeader("Cache-Control", "no-store");
 
-        if (user == null) {
-            res.sendRedirect(
-                    req.getContextPath()
-                    + "/safety/auth/Login.action");
-            return;
-        }
+		if (!"GET".equalsIgnoreCase(req.getMethod())) {
+			res.setHeader("Allow", "GET");
+			res.sendError(
+					HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+			return;
+		}
 
-        if (!user.isActive()
-                || !"FAMILY".equals(user.getRole())) {
-            res.sendError(
-                    HttpServletResponse.SC_FORBIDDEN);
-            return;
-        }
+		if (user == null) {
+			res.sendRedirect(
+					req.getContextPath()
+							+ "/safety/auth/Login.action");
+			return;
+		}
 
-        // ログイン中の保護者に関連付けられた生徒を取得
-        students = dao.findByFamilyUserId(user.getId());
-        pendingRequests =
-                requestDao.findPendingByFamilyUserId(user.getId());
-        reviewedRequests =
-                requestDao.findReviewedByFamilyUserId(user.getId());
-        // DBへデータ保存 5
-        // なし
+		if (!user.isActive()
+				|| !"FAMILY".equals(user.getRole())) {
+			res.sendError(
+					HttpServletResponse.SC_FORBIDDEN);
+			return;
+		}
 
-        // レスポンス値をセット 6
-        req.setAttribute("students", students);
-        req.setAttribute("pendingRequests", pendingRequests);
-        req.setAttribute("reviewedRequests", reviewedRequests);
-        // POST処理の結果を一度だけ表示する
-        req.setAttribute(
-             "childRequestMessage",
-             session.getAttribute("childRequestMessage"));
+		// ログイン中の保護者に関連付けられた生徒を取得
+		students = dao.findByFamilyUserId(user.getId());
+		// 最新の通知設定をDBから取得
+		notificationEnabled = userDao.getNotificationEnabled(user.getId());
 
-     session.removeAttribute("childRequestMessage");
-        // JSPへフォワード 7
-        req.getRequestDispatcher(
-                "/WEB-INF/views/family/settings.jsp")
-                .forward(req, res);
-    }
+		// DBへデータ保存 5
+		// なし
+
+		// レスポンス値をセット 6
+		req.setAttribute(
+				"notificationEnabled",
+				notificationEnabled);
+		req.setAttribute("students", students);
+		// Web Pushの公開鍵を画面へ渡す
+		String vapidPublicKey = System.getenv("VAPID_PUBLIC_KEY");
+
+		req.setAttribute(
+				"vapidPublicKey",
+				vapidPublicKey == null ? "" : vapidPublicKey);
+		// JSPへフォワード 7
+		req.getRequestDispatcher(
+				"/WEB-INF/views/family/settings.jsp")
+				.forward(req, res);
+	}
 }

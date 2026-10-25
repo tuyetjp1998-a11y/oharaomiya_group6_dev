@@ -178,4 +178,119 @@ public class FamilyStudentRequestDao extends DAO {
 
         return requests;
     }
+    
+    /**
+     * 保護者の申請履歴を最新20件取得する。
+     */
+    public List<FamilyStudentRequest> findHistoryByFamilyUserId(
+            long familyUserId)
+            throws NamingException, SQLException {
+
+        List<FamilyStudentRequest> requests = new ArrayList<>();
+
+        String sql = """
+                SELECT request.id,
+                       student.login_id AS student_login_id,
+                       request.status,
+                       request.requested_at,
+                       request.reviewed_at
+                FROM public.family_student_request AS request
+                JOIN public.users AS student
+                  ON student.id = request.student_user_id
+                WHERE request.family_user_id = ?
+                ORDER BY request.requested_at DESC,
+                         request.id DESC
+                
+                """;
+
+        try (Connection connection = getConnection();
+             PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
+
+            statement.setLong(1, familyUserId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    FamilyStudentRequest request =
+                            new FamilyStudentRequest();
+
+                    request.setId(resultSet.getLong("id"));
+                    request.setStudentLoginId(
+                            resultSet.getString("student_login_id"));
+                    request.setStatus(
+                            resultSet.getString("status"));
+                    request.setRequestedAt(
+                            resultSet.getObject(
+                                    "requested_at",
+                                    OffsetDateTime.class));
+                    request.setReviewedAt(
+                            resultSet.getObject(
+                                    "reviewed_at",
+                                    OffsetDateTime.class));
+
+                    requests.add(request);
+                }
+            }
+        }
+
+        return requests;
+    }
+    
+    /**
+     * 生徒ごとの最新申請が却下されている場合に取得する。
+     * 関連付け済みの生徒は除外する。
+     */
+    public List<FamilyStudentRequest> findLatestRejected(
+            long familyUserId)
+            throws NamingException, SQLException {
+
+        List<FamilyStudentRequest> requests = new ArrayList<>();
+
+        String sql = """
+                SELECT request.id,
+                       student.login_id AS student_login_id
+                FROM public.family_student_request AS request
+                JOIN public.users AS student
+                  ON student.id = request.student_user_id
+                WHERE request.family_user_id = ?
+                  AND request.status = 'REJECTED'
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM public.family_student_request AS newer
+                      WHERE newer.family_user_id = request.family_user_id
+                        AND newer.student_user_id = request.student_user_id
+                        AND newer.id > request.id
+                  )
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM public.family_student AS fs
+                      WHERE fs.family_user_id = request.family_user_id
+                        AND fs.student_user_id = request.student_user_id
+                  )
+                ORDER BY request.reviewed_at DESC, request.id DESC
+                LIMIT 20
+                """;
+
+        try (Connection connection = getConnection();
+             PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
+
+            statement.setLong(1, familyUserId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    FamilyStudentRequest request =
+                            new FamilyStudentRequest();
+
+                    request.setId(resultSet.getLong("id"));
+                    request.setStudentLoginId(
+                            resultSet.getString("student_login_id"));
+
+                    requests.add(request);
+                }
+            }
+        }
+
+        return requests;
+    }
 }

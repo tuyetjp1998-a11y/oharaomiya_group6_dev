@@ -19,7 +19,9 @@
 <body class="a">
     <c:url var="loginExecuteUrl"
            value="/safety/auth/LoginExecute.action" />
-
+	<c:url var="registerUrl"
+       value="/safety/auth/Register.action" />
+	
     <main class="login-layout">
         <section class="login-story">
             <h1 class="login-brand">AnpiLink</h1>
@@ -112,10 +114,10 @@
                     </button>
                 </form>
 
-                <%-- 新規登録機能の接続までは無効にする --%>
-                <a class="register-link" aria-disabled="true">
-                    新規登録（保護者）
-                </a>
+                <%-- 保護者の新規登録画面へ --%>
+<a class="register-link" href="${registerUrl}">
+    新規登録（保護者）
+</a>
             </div>
         </section>
     </main>
