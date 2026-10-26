@@ -1,193 +1,213 @@
 <%-- 生徒の位置情報画面 --%>
-<%@ page language="java"
-         contentType="text/html; charset=UTF-8"
-         pageEncoding="UTF-8" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="jakarta.tags.core"%>
 
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>位置情報 | AnpiLink</title>
+<title>位置情報 | AnpiLink</title>
 
-    <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/css/style.css?v=20261014-1">
+<link rel="stylesheet"
+	href="${pageContext.request.contextPath}/css/style.css?v=20261014-1">
 </head>
 <body class="a">
-    <%-- 遷移先URL --%>
-    <c:url var="homeUrl"
-           value="/safety/student/Home.action" />
-    <c:url var="moreUrl"
-           value="/safety/student/More.action" />
+	<%-- 遷移先URL --%>
+	<c:url var="homeUrl" value="/safety/student/Home.action" />
+	<c:url var="moreUrl" value="/safety/student/More.action" />
 
-    <div class="phone">
-        <header class="phone-header">
-            <div class="brand">AnpiLink</div>
-        </header>
+	<div class="phone">
+		<header class="phone-header">
+			<div class="brand">AnpiLink</div>
+		</header>
 
-        <main class="page">
+		<main class="page">
     <h1>位置情報</h1>
 
     <div class="card">
-        <div class="map-placeholder">
-            地図表示は準備中です。
-        </div>
+        <c:if
+				test="${requestScope.latestReport.latitude ne null
+              and requestScope.latestReport.longitude ne null}">
+				<div id="latestLocationMap"
+					data-latitude="<c:out value='${requestScope.latestReport.latitude}' />"
+					data-longitude="<c:out value='${requestScope.latestReport.longitude}' />">
 
-        <h2>最新の安否回答の位置情報</h2>
+					<iframe id="latestLocationMapFrame" class="student-location-map"
+						title="最新の安否回答の位置" loading="lazy" referrerpolicy="no-referrer">
+					</iframe>
 
-        <c:choose>
-            <c:when test="${empty requestScope.latestReport}">
-                <p class="muted">
-                    安否回答はまだありません。
-                </p>
-            </c:when>
+					<p class="muted">安否回答時に取得した位置です。現在地ではありません。</p>
+				</div>
+			</c:if>
 
-            <c:otherwise>
-                <div class="row">
-                    <span>安否送信日時</span>
-                    <span>
-                        <c:out value="${requestScope.reportedAtText}" />
-                    </span>
-                </div>
+			<h2>最新の安否回答の位置情報</h2>
 
-                <c:choose>
-                    <c:when test="${requestScope.latestReport.latitude ne null
+			<c:choose>
+				<c:when test="${empty requestScope.latestReport}">
+					<p class="muted">安否回答はまだありません。</p>
+				</c:when>
+
+				<c:otherwise>
+					<div class="row">
+						<span>安否送信日時</span> <span> <c:out
+								value="${requestScope.reportedAtText}" />
+						</span>
+					</div>
+
+					<c:choose>
+						<c:when
+							test="${requestScope.latestReport.latitude ne null
                                    and requestScope.latestReport.longitude ne null}">
-                        <div class="row">
-                            <span>緯度</span>
-                            <span>
-                                <c:out value="${requestScope.latestReport.latitude}" />
-                            </span>
-                        </div>
+							<div class="row">
+								<span>緯度</span> <span> <c:out
+										value="${requestScope.latestReport.latitude}" />
+								</span>
+							</div>
 
-                        <div class="row">
-                            <span>経度</span>
-                            <span>
-                                <c:out value="${requestScope.latestReport.longitude}" />
-                            </span>
-                        </div>
+							<div class="row">
+								<span>経度</span> <span> <c:out
+										value="${requestScope.latestReport.longitude}" />
+								</span>
+							</div>
 
-                        <div class="row">
-                            <span>位置精度</span>
-                            <span>
-                                約
-                                <c:out value="${requestScope.latestReport.locationAccuracy}" />
-                                m
-                            </span>
-                        </div>
+							<div class="row">
+								<span>位置精度</span> <span> 約 <c:out
+										value="${requestScope.latestReport.locationAccuracy}" /> m
+								</span>
+							</div>
 
-                        <div class="row">
-                            <span>位置取得日時</span>
-                            <span>
-                                <c:out value="${requestScope.locationAcquiredAtText}" />
-                            </span>
-                        </div>
-                    </c:when>
+							<div class="row">
+								<span>位置取得日時</span> <span> <c:out
+										value="${requestScope.locationAcquiredAtText}" />
+								</span>
+							</div>
+						</c:when>
 
-                    <c:otherwise>
-                        <p class="muted">
-                            最新の安否回答には位置情報がありません（未取得）。
-                        </p>
-                    </c:otherwise>
-                </c:choose>
-            </c:otherwise>
-        </c:choose>
-    </div>
+						<c:otherwise>
+							<p class="muted">最新の安否回答には位置情報がありません（未取得）。</p>
+						</c:otherwise>
+					</c:choose>
+				</c:otherwise>
+			</c:choose>
+	</div>
 
-    <h2>現在地の確認</h2>
+	<h2>現在地の確認</h2>
 
-    <div class="card">
-        <p id="locationStatus"
-           role="status"
-           aria-live="polite">
-            未取得
-        </p>
+	<div class="card">
+		<p id="locationStatus" role="status" aria-live="polite">未取得</p>
 
-        <div id="locationDetails" hidden>
-            <div class="row">
-                <span>緯度</span>
-                <span id="latitudeText"></span>
-            </div>
+		<div id="locationDetails" hidden>
+			<div class="row">
+				<span>緯度</span> <span id="latitudeText"></span>
+			</div>
 
-            <div class="row">
-                <span>経度</span>
-                <span id="longitudeText"></span>
-            </div>
+			<div class="row">
+				<span>経度</span> <span id="longitudeText"></span>
+			</div>
 
-            <div class="row">
-                <span>位置精度</span>
-                <span id="accuracyText"></span>
-            </div>
+			<div class="row">
+				<span>位置精度</span> <span id="accuracyText"></span>
+			</div>
 
-            <div class="row">
-                <span>取得日時</span>
-                <span id="locationTimeText"></span>
-            </div>
-        </div>
+			<div class="row">
+				<span>取得日時</span> <span id="locationTimeText"></span>
+			</div>
+		</div>
+		<div id="currentLocationMap" hidden>
+			<iframe id="currentLocationMapFrame" class="student-location-map"
+				title="今回取得した現在地" loading="lazy" referrerpolicy="no-referrer">
+			</iframe>
 
-        <p class="muted">
-            ここで取得した現在地は画面表示のみで、
-            送信済みの位置情報は変更しません。
-        </p>
-    </div>
+			<p class="muted">今回取得した現在地を表示しています。</p>
+		</div>
 
-    <button type="button"
-            class="primary group-submit"
-            id="getLocationButton">
-        現在地を取得
-    </button>
-</main>
+		<p class="muted">ここで取得した現在地は画面表示のみで、 送信済みの位置情報は変更しません。</p>
+	</div>
 
-        <footer class="app-footer mobile-footer">
-            ＠AnpiLink
-        </footer>
+	<button type="button" class="primary group-submit"
+		id="getLocationButton">現在地を取得</button>
+	</main>
 
-        <nav class="phone-tabs tabs two"
-             aria-label="メインメニュー">
-            <a href="${homeUrl}">
-                <svg viewBox="0 0 24 24"
-                     aria-hidden="true"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.7"
-                     stroke-linecap="round"
-                     stroke-linejoin="round">
+	<footer class="app-footer mobile-footer"> ＠AnpiLink </footer>
+
+	<nav class="phone-tabs tabs two" aria-label="メインメニュー">
+		<a href="${homeUrl}"> <svg viewBox="0 0 24 24" aria-hidden="true"
+				fill="none" stroke="currentColor" stroke-width="1.7"
+				stroke-linecap="round" stroke-linejoin="round">
                     <path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7" />
-                </svg>
-
-                <span>ホーム</span>
-            </a>
-
-            <a href="${moreUrl}">
-                <svg viewBox="0 0 24 24"
-                     aria-hidden="true"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.7"
-                     stroke-linecap="round"
-                     stroke-linejoin="round">
+                </svg> <span>ホーム</span>
+		</a> <a href="${moreUrl}"> <svg viewBox="0 0 24 24" aria-hidden="true"
+				fill="none" stroke="currentColor" stroke-width="1.7"
+				stroke-linecap="round" stroke-linejoin="round">
                     <path d="M5 6h14M5 12h14M5 18h14" />
-                </svg>
+                </svg> <span>その他</span>
+		</a>
+	</nav>
+	</div>
 
-                <span>その他</span>
-            </a>
-        </nav>
-    </div>
-    
-    <script>
+	<script>
     const getLocationButton =
             document.getElementById("getLocationButton");
     const locationStatus =
             document.getElementById("locationStatus");
     const locationDetails =
             document.getElementById("locationDetails");
+    var currentLocationMap =
+        document.getElementById("currentLocationMap");
+var currentLocationMapFrame =
+        document.getElementById("currentLocationMapFrame");
 
+// 取得した座標を中心に地図を表示する
+function showLocationMap(frame, latitude, longitude) {
+    if (!Number.isFinite(latitude)
+            || !Number.isFinite(longitude)
+            || latitude < -90 || latitude > 90
+            || longitude < -180 || longitude > 180) {
+        return false;
+    }
+
+    var west = Math.max(-180, longitude - 0.005);
+    var east = Math.min(180, longitude + 0.005);
+    var south = Math.max(-90, latitude - 0.005);
+    var north = Math.min(90, latitude + 0.005);
+
+    var params = new URLSearchParams();
+
+    params.set("bbox", [
+        west, south, east, north
+    ].join(","));
+
+    params.set("layer", "mapnik");
+    params.set("marker", latitude + "," + longitude);
+
+    frame.src =
+        "https://www.openstreetmap.org/export/embed.html?"
+        + params.toString();
+
+    return true;
+}
+
+// 最新の安否回答に保存された位置を表示する
+var latestLocationMap =
+        document.getElementById("latestLocationMap");
+
+if (latestLocationMap) {
+    showLocationMap(
+        document.getElementById("latestLocationMapFrame"),
+        Number(latestLocationMap.getAttribute("data-latitude")),
+        Number(latestLocationMap.getAttribute("data-longitude"))
+    );
+}
+	
     getLocationButton.addEventListener("click", function () {
         // 前回の表示をクリア
         locationDetails.hidden = true;
+     // 前回取得した現在地の地図をクリアする
+        currentLocationMap.hidden = true;
+        currentLocationMapFrame.removeAttribute("src");
 
         if (!window.isSecureContext) {
             locationStatus.textContent =
@@ -207,6 +227,14 @@
         navigator.geolocation.getCurrentPosition(
             function (position) {
                 const coords = position.coords;
+             // 今回取得した座標を地図に表示する
+                if (showLocationMap(
+                        currentLocationMapFrame,
+                        coords.latitude,
+                        coords.longitude)) {
+
+                    currentLocationMap.hidden = false;
+                }
 
                 document.getElementById("latitudeText").textContent =
                         coords.latitude.toFixed(6);

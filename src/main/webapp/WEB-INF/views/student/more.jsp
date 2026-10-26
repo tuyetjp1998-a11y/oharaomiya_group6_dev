@@ -71,9 +71,6 @@
                 </button>
             </div>
 
-            <p class="muted">
-    位置情報の取得・通信状態・設定の各機能は準備中です。
-</p>
         </main>
 
         <footer class="app-footer mobile-footer">

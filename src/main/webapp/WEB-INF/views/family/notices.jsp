@@ -23,24 +23,31 @@
            value="/safety/family/More.action" />
     <c:url var="detailUrl"
            value="/safety/family/NoticeDetail.action" />
-
+	
+	
     <div class="phone">
         <header class="phone-header">
             <div class="brand">AnpiLink</div>
         </header>
 
         <main class="page">
-            <h1>学校からの連絡</h1>
+    <div class="mobile-page-heading">
+        <h1>学校からの連絡</h1>
 
-            <a class="card child-card" href="${detailUrl}">
-                <span>避難訓練のお知らせ</span>
-                <span aria-hidden="true">›</span>
-            </a>
+        <a class="mobile-back-button" href="${moreUrl}">
+            ← 戻る
+        </a>
+    </div>
 
-            <p class="muted">
-                現在は画面確認用のサンプルを表示しています。
-            </p>
-        </main>
+    <a class="card child-card" href="${detailUrl}">
+        <span>避難訓練のお知らせ</span>
+        <span aria-hidden="true">›</span>
+    </a>
+
+    <p class="muted notice-preview-note">
+        表示内容は画面確認用のサンプルです。
+    </p>
+</main>
 
         <footer class="app-footer mobile-footer">
             ＠AnpiLink

@@ -1,88 +1,67 @@
 <%-- 学校からの連絡一覧画面 --%>
-<%@ page language="java"
-         contentType="text/html; charset=UTF-8"
-         pageEncoding="UTF-8" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="jakarta.tags.core"%>
 
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>学校からの連絡 | AnpiLink</title>
+<title>学校からの連絡 | AnpiLink</title>
 
-    <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/css/style.css">
+<link rel="stylesheet"
+	href="${pageContext.request.contextPath}/css/style.css">
 </head>
 <body class="a">
-    <%-- 遷移先URL --%>
-    <c:url var="homeUrl"
-           value="/safety/student/Home.action" />
-    <c:url var="moreUrl"
-           value="/safety/student/More.action" />
-    <c:url var="noticeDetailUrl"
-       value="/safety/student/NoticeDetail.action" />
-       
-    <div class="phone">
-        <header class="phone-header">
-            <div class="brand">AnpiLink</div>
-        </header>
+	<%-- 遷移先URL --%>
+	<c:url var="homeUrl" value="/safety/student/Home.action" />
+	<c:url var="moreUrl" value="/safety/student/More.action" />
+	<c:url var="noticeDetailUrl"
+		value="/safety/student/NoticeDetail.action" />
 
-        <main class="page">
-    <h1>学校からの連絡</h1>
+	<div class="phone">
+		<header class="phone-header">
+			<div class="brand">AnpiLink</div>
+		</header>
 
-    <%-- 詳細画面との連携が完了するまで無効にする --%>
-    <a class="card child-card"
-       role="link"
-       aria-disabled="true">
-        <a class="card child-card" href="${noticeDetailUrl}">
-    <span>避難訓練のお知らせ</span>
-    <span aria-hidden="true">›</span>
-	</a>
-        
+		<main class="page">
+    <div class="mobile-page-heading">
+        <h1>学校からの連絡</h1>
+
+        <a class="mobile-back-button" href="${moreUrl}">
+            ← 戻る
+        </a>
+    </div>
+
+    <a class="card child-card" href="${noticeDetailUrl}">
+        <span>避難訓練のお知らせ</span>
+        <span aria-hidden="true">›</span>
+    </a>
+
     <p class="muted notice-preview-note">
         表示内容は画面確認用のサンプルです。
     </p>
-	</main>
-		<footer class="app-footer mobile-footer">
-            ＠AnpiLink
-        </footer>
+</main>
+		<footer class="app-footer mobile-footer"> ＠AnpiLink </footer>
 
-        <nav class="phone-tabs tabs two"
-             aria-label="メインメニュー">
-            <a href="${homeUrl}">
-                <svg viewBox="0 0 24 24"
-                     aria-hidden="true"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.7"
-                     stroke-linecap="round"
-                     stroke-linejoin="round">
+		<nav class="phone-tabs tabs two" aria-label="メインメニュー">
+			<a href="${homeUrl}"> <svg viewBox="0 0 24 24" aria-hidden="true"
+					fill="none" stroke="currentColor" stroke-width="1.7"
+					stroke-linecap="round" stroke-linejoin="round">
                     <path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7" />
-                </svg>
-
-                <span>ホーム</span>
-            </a>
-
-            <a href="${moreUrl}">
-                <svg viewBox="0 0 24 24"
-                     aria-hidden="true"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.7"
-                     stroke-linecap="round"
-                     stroke-linejoin="round">
+                </svg> <span>ホーム</span>
+			</a> <a href="${moreUrl}"> <svg viewBox="0 0 24 24"
+					aria-hidden="true" fill="none" stroke="currentColor"
+					stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M5 6h14M5 12h14M5 18h14" />
-                </svg>
+                </svg> <span>その他</span>
+			</a>
+		</nav>
+	</div>
 
-                <span>その他</span>
-            </a>
-        </nav>
-    </div>
 
-   
-   
+
 </body>
 </html>
