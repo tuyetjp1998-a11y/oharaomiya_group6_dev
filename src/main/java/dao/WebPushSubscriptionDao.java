@@ -28,37 +28,38 @@ public class WebPushSubscriptionDao extends DAO {
 			throws NamingException, SQLException {
 
 		String sql = """
-				WITH target_family AS (
-				    SELECT id
-				    FROM public.users
-				    WHERE id = ?
-				      AND role = 'FAMILY'
-				      AND active = TRUE
-				    FOR UPDATE
-				),
-				saved_subscription AS (
-				    INSERT INTO public.web_push_subscription
-				        (user_id, endpoint, p256dh, auth)
-				    SELECT id, ?, ?, ?
-				    FROM target_family
-				    ON CONFLICT (endpoint) DO UPDATE
-				    SET p256dh = EXCLUDED.p256dh,
-				        auth = EXCLUDED.auth,
-				        updated_at = CURRENT_TIMESTAMP
-				    WHERE web_push_subscription.user_id
-				          = EXCLUDED.user_id
-				    RETURNING user_id
-				)
-				UPDATE public.users
-				SET notification_enabled = TRUE
-				WHERE id = ?
-				  AND EXISTS (
-				      SELECT 1
-				      FROM saved_subscription
-				      WHERE user_id = users.id
-				  )
-				RETURNING id
-				""";
+						WITH target_family AS (
+						    SELECT id
+						    FROM public.users
+						    WHERE id = ?
+						      AND role = 'FAMILY'
+						      AND active = TRUE
+						    FOR UPDATE
+						),
+						saved_subscription AS (
+						    INSERT INTO public.web_push_subscription
+						        (user_id, endpoint, p256dh, auth)
+						    SELECT id, ?, ?, ?
+						    FROM target_family
+						    ON CONFLICT (endpoint) DO UPDATE
+						    SET p256dh = EXCLUDED.p256dh,
+						        auth = EXCLUDED.auth,
+						        updated_at = CURRENT_TIMESTAMP
+						    WHERE web_push_subscription.user_id
+				    = EXCLUDED.user_id
+				AND web_push_subscription.expired_at IS NULL
+						    RETURNING user_id
+						)
+						UPDATE public.users
+						SET notification_enabled = TRUE
+						WHERE id = ?
+						  AND EXISTS (
+						      SELECT 1
+						      FROM saved_subscription
+						      WHERE user_id = users.id
+						  )
+						RETURNING id
+						""";
 
 		try (Connection connection = getConnection();
 				PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -120,7 +121,8 @@ public class WebPushSubscriptionDao extends DAO {
 				        ON u.id = s.user_id
 				WHERE u.role = 'FAMILY'
 				  AND u.active = TRUE
-				  AND u.notification_enabled = TRUE
+				  AND u.notification_enabled = TRUE 
+				  AND s.expired_at IS NULL
 				  AND EXISTS (
 				      SELECT 1
 				      FROM public.family_student fs
@@ -213,37 +215,96 @@ public class WebPushSubscriptionDao extends DAO {
 			return statement.executeUpdate() > 0;
 		}
 	}
-	
-    /**
-     * この通知登録が、通知を有効にしている保護者のものか確認する。
-     */
-    public boolean isEnabledForEndpoint(
-            long userId,
-            String endpoint)
-            throws NamingException, SQLException {
 
-        String sql = """
-                SELECT 1
-                FROM public.web_push_subscription s
-                INNER JOIN public.users u
-                        ON u.id = s.user_id
-                WHERE s.user_id = ?
-                  AND s.endpoint = ?
-                  AND u.role = 'FAMILY'
-                  AND u.active = TRUE
-                  AND u.notification_enabled = TRUE
-                """;
+	/**
+	 * この通知登録が、通知を有効にしている保護者のものか確認する。
+	 */
+	public boolean isEnabledForEndpoint(
+			long userId,
+			String endpoint)
+			throws NamingException, SQLException {
 
-        try (Connection connection = getConnection();
-             PreparedStatement statement =
-                     connection.prepareStatement(sql)) {
+		String sql = """
+				SELECT 1
+				FROM public.web_push_subscription s
+				INNER JOIN public.users u
+				        ON u.id = s.user_id
+				WHERE s.user_id = ?
+				  AND s.endpoint = ?
+				  AND u.role = 'FAMILY'
+				  AND u.active = TRUE
+				  AND u.notification_enabled = TRUE
+				  AND s.expired_at IS NULL
+				""";
 
-            statement.setLong(1, userId);
-            statement.setString(2, endpoint);
+		try (Connection connection = getConnection();
+				PreparedStatement statement = connection.prepareStatement(sql)) {
 
-            try (ResultSet resultSet = statement.executeQuery()) {
-                return resultSet.next();
-            }
-        }
-    }
+			statement.setLong(1, userId);
+			statement.setString(2, endpoint);
+
+			try (ResultSet resultSet = statement.executeQuery()) {
+				return resultSet.next();
+			}
+		}
+	}
+	/**
+	 * Pushサービスで無効と判定された登録を期限切れにする。
+	 * 別の登録や鍵が変更された登録には影響させない。
+	 */
+	public boolean markExpired(WebPushSubscription subscription)
+	        throws NamingException, SQLException {
+
+	    String sql = """
+	            UPDATE public.web_push_subscription
+	            SET expired_at = CURRENT_TIMESTAMP
+	            WHERE id = ?
+	              AND user_id = ?
+	              AND endpoint = ?
+	              AND p256dh = ?
+	              AND auth = ?
+	              AND expired_at IS NULL
+	            """;
+
+	    try (Connection connection = getConnection();
+	         PreparedStatement statement =
+	                 connection.prepareStatement(sql)) {
+
+	        statement.setLong(1, subscription.getId());
+	        statement.setLong(2, subscription.getUserId());
+	        statement.setString(3, subscription.getEndpoint());
+	        statement.setString(4, subscription.getP256dh());
+	        statement.setString(5, subscription.getAuth());
+
+	        return statement.executeUpdate() == 1;
+	    }
+	}
+
+	/**
+	 * 利用者が所有する登録が期限切れか確認する。
+	 */
+	public boolean isExpiredForEndpoint(
+	        long userId, String endpoint)
+	        throws NamingException, SQLException {
+
+	    String sql = """
+	            SELECT 1
+	            FROM public.web_push_subscription
+	            WHERE user_id = ?
+	              AND endpoint = ?
+	              AND expired_at IS NOT NULL
+	            """;
+
+	    try (Connection connection = getConnection();
+	         PreparedStatement statement =
+	                 connection.prepareStatement(sql)) {
+
+	        statement.setLong(1, userId);
+	        statement.setString(2, endpoint);
+
+	        try (ResultSet resultSet = statement.executeQuery()) {
+	            return resultSet.next();
+	        }
+	    }
+	}
 }

@@ -108,7 +108,19 @@ public class PushSubscriptionAction extends Action {
         );
 
         if (!saved) {
-            res.sendError(HttpServletResponse.SC_CONFLICT);
+
+            // 自分の期限切れ登録の場合は再登録を求める
+            if (dao.isExpiredForEndpoint(
+                    user.getId(), endpoint)) {
+
+                res.setStatus(
+                        HttpServletResponse.SC_GONE);
+                return;
+            }
+
+            // 他の利用者が所有する登録などは上書きしない
+            res.setStatus(
+                    HttpServletResponse.SC_CONFLICT);
             return;
         }
 

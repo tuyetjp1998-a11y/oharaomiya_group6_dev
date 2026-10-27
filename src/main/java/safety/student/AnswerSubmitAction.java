@@ -233,7 +233,18 @@ public class AnswerSubmitAction extends Action {
 								"Web Push受付成功: 登録ID={0}",
 								subscription.getId());
 
-					} else if (statusCode == 410) {
+					} else if (statusCode == 404 || statusCode == 410) {
+
+						// 無効な登録は削除せず、期限切れとして記録する
+						boolean marked = subscriptionDao.markExpired(subscription);
+
+						LOGGER.log(
+								Level.INFO,
+								"期限切れWeb Push登録: 登録ID={0}, 更新={1}",
+								new Object[] {
+										subscription.getId(),
+										marked
+								});
 
 						// 有効期限切れの通知登録を削除する
 						boolean deleted = subscriptionDao.deleteExpired(
