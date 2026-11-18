@@ -23,7 +23,10 @@ public class WebPushSubscription implements Serializable {
 
     // 暗号化に使用する認証情報
     private String auth;
-
+    
+    // 通知登録に関連付けられたログイン維持用トークンID
+    private Long loginTokenId;
+    
     public WebPushSubscription() {
     }
 
@@ -65,5 +68,13 @@ public class WebPushSubscription implements Serializable {
 
     public void setAuth(String auth) {
         this.auth = auth;
+    }
+    
+    public Long getLoginTokenId() {
+        return loginTokenId;
+    }
+
+    public void setLoginTokenId(Long loginTokenId) {
+        this.loginTokenId = loginTokenId;
     }
 }

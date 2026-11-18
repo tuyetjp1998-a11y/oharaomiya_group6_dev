@@ -3320,3 +3320,37 @@ button,input,select,textarea {
 #currentLocationMap[hidden] {
   display: none;
 }
+/* 生徒の設定に関する注意事項 */
+.student-setting-warning {
+  color: #b42318;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+
+.notification-intro .notification-permission-button,
+.notification-intro .notification-later {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    text-align: center;
+}
+
+.notification-intro .notification-permission-button {
+    margin-top: 16px;
+}
+
+.notification-intro .notification-help {
+    margin: 10px 0 0;
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+.notification-intro .notification-help:empty {
+    display: none;
+}
+
+.notification-intro > form {
+    margin: 12px 0 0;
+}

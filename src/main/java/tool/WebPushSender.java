@@ -66,13 +66,44 @@ public class WebPushSender {
     public int send(WebPushSubscription subscription)
             throws Exception {
 
+        // 既存の保護者向け安否通知
+        return sendPayload(
+                subscription,
+                "{}".getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * ログイン期限の通知を送信する。
+     */
+    public int sendLoginReminder(
+            WebPushSubscription subscription)
+            throws Exception {
+
+        // 個人情報やログイントークンは送信しない
+        String json = """
+                {"type":"LOGIN_REMINDER"}
+                """;
+
+        return sendPayload(
+                subscription,
+                json.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * 指定された内容をPushサービスへ送信する。
+     */
+    private int sendPayload(
+            WebPushSubscription subscription,
+            byte[] payload)
+            throws Exception {
+
         // 任意のURLへ送信しないように送信先を確認する
         URI endpoint = URI.create(
                 subscription.getEndpoint());
 
         if (!"https".equalsIgnoreCase(endpoint.getScheme())
                 || endpoint.getHost() == null
-                || !ALLOWED_HOSTS.contains(endpoint.getHost())
+                || !isAllowedPushHost(endpoint.getHost())
                 || endpoint.getUserInfo() != null
                 || endpoint.getFragment() != null
                 || (endpoint.getPort() != -1
@@ -82,10 +113,7 @@ public class WebPushSender {
                     "許可されていない通知先です。");
         }
 
-        // 通知本文はService Worker側で表示する
-        // 生徒の氏名や位置情報は送信しない
-        byte[] payload =
-                "{}".getBytes(StandardCharsets.UTF_8);
+       
 
         Notification notification = new Notification(
                 subscription.getEndpoint(),
@@ -119,7 +147,23 @@ public class WebPushSender {
                     .getStatusCode();
         }
     }
+    
+    /**
+     * 許可されたPushサービスのホストか確認する。
+     */
+    private static boolean isAllowedPushHost(String host) {
 
+        if (host == null) {
+            return false;
+        }
+
+        String normalizedHost =
+                host.toLowerCase(java.util.Locale.ROOT);
+
+        return ALLOWED_HOSTS.contains(normalizedHost)
+                || normalizedHost.equals("notify.windows.com")
+                || normalizedHost.endsWith(".notify.windows.com");
+    }
     /**
      * 必須の環境変数を取得する。
      */

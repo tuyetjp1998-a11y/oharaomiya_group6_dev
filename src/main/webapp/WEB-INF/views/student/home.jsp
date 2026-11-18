@@ -1,29 +1,29 @@
 <%-- 生徒ホーム画面 --%>
-<%@ page language="java"
-         contentType="text/html; charset=UTF-8"
-         pageEncoding="UTF-8" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>生徒ホーム | AnpiLink</title>
-
     <link rel="stylesheet"
           href="${pageContext.request.contextPath}/css/style.css">
+
+    <%-- 生徒向けPWAの設定 --%>
+    <link rel="manifest"
+          href="${pageContext.request.contextPath}/student.webmanifest">
+    <meta name="theme-color" content="#2463ad">
+    <link rel="apple-touch-icon" sizes="180x180"
+          href="${pageContext.request.contextPath}/images/icons/apple-touch-icon.png">
 </head>
 <body class="a">
+
     <%-- 遷移先URL --%>
-    <c:url var="homeUrl"
-           value="/safety/student/Home.action" />
-    <c:url var="answerUrl"
-           value="/safety/student/Answer.action" />
-    <c:url var="moreUrl"
-           value="/safety/student/More.action" />
+    <c:url var="homeUrl" value="/safety/student/Home.action" />
+    <c:url var="answerUrl" value="/safety/student/Answer.action" />
+    <c:url var="moreUrl" value="/safety/student/More.action" />
 
     <div class="phone">
         <header class="phone-header">
@@ -33,65 +33,82 @@
         <main class="student-main">
             <div class="student-welcome">
                 <p class="eyebrow">生徒ホーム</p>
-
-                <h1>
-                    <c:out value="${sessionScope.user.name}" />さん
-                </h1>
+                <h1><c:out value="${sessionScope.user.name}" /> さん</h1>
             </div>
+
+            <%-- ログイン有効期限の案内 --%>
+            <c:if test="${requestScope.loginRenewalRequired}">
+                <c:url var="renewLoginUrl" value="/safety/auth/Login.action">
+                    <c:param name="reauth" value="true" />
+                </c:url>
+
+                <section class="card" aria-label="ログイン有効期限">
+                    <p role="status">
+                        <c:choose>
+                            <c:when test="${requestScope.loginTokenExpired}">
+                                ログイン維持の有効期限が切れました。
+                                再ログインしてください。
+                            </c:when>
+                            <c:otherwise>
+                                ログインの有効期限が近づいています。
+                                緊急時に備えて、再ログインしてください。
+                            </c:otherwise>
+                        </c:choose>
+                    </p>
+                    <p>
+                        有効期限：
+                        <c:out value="${requestScope.loginExpiresAtText}" />
+                    </p>
+                    <a class="primary" href="${renewLoginUrl}">再ログイン</a>
+                </section>
+            </c:if>
 
             <section class="answer-area">
                 <a class="answer-button" href="${answerUrl}">
                     <span>安否を送信</span>
-
-                    <svg viewBox="0 0 24 24"
-                         aria-hidden="true"
-                         fill="none"
-                         stroke="currentColor"
-                         stroke-width="1.7"
-                         stroke-linecap="round"
-                         stroke-linejoin="round">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"
+                         fill="none" stroke="currentColor" stroke-width="1.7"
+                         stroke-linecap="round" stroke-linejoin="round">
                         <path d="M5 12h14m-5-5 5 5-5 5" />
                     </svg>
                 </a>
             </section>
         </main>
 
-        <footer class="app-footer mobile-footer">
-            ＠AnpiLink
-        </footer>
+        <footer class="app-footer mobile-footer">＠AnpiLink</footer>
 
-        <nav class="phone-tabs tabs two"
-             aria-label="メインメニュー">
-            <a class="active"
-               href="${homeUrl}"
-               aria-current="page">
-                <svg viewBox="0 0 24 24"
-                     aria-hidden="true"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.7"
-                     stroke-linecap="round"
-                     stroke-linejoin="round">
+        <nav class="phone-tabs tabs two" aria-label="メインメニュー">
+            <a class="active" href="${homeUrl}" aria-current="page">
+                <svg viewBox="0 0 24 24" aria-hidden="true"
+                     fill="none" stroke="currentColor" stroke-width="1.7"
+                     stroke-linecap="round" stroke-linejoin="round">
                     <path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7" />
                 </svg>
-
                 <span>ホーム</span>
             </a>
-
             <a href="${moreUrl}">
-                <svg viewBox="0 0 24 24"
-                     aria-hidden="true"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.7"
-                     stroke-linecap="round"
-                     stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" aria-hidden="true"
+                     fill="none" stroke="currentColor" stroke-width="1.7"
+                     stroke-linecap="round" stroke-linejoin="round">
                     <path d="M5 6h14M5 12h14M5 18h14" />
                 </svg>
-
                 <span>その他</span>
             </a>
         </nav>
     </div>
+
+    <%-- 通知設定の案内が必要か確認する --%>
+    <c:if test="${requestScope.checkNotificationIntro}">
+        <c:url var="introCheckJs" value="/js/notification-intro-check.js" />
+        <c:url var="introUrl" value="/safety/auth/NotificationIntro.action" />
+        <c:url var="reminderStatusUrl"
+               value="/safety/auth/LoginReminderRegistrationStatus.action" />
+
+        <script src="${introCheckJs}"
+                data-intro-url="${introUrl}"
+                data-status-url="${reminderStatusUrl}"
+                data-worker-scope="${pageContext.request.contextPath}/"
+                defer></script>
+    </c:if>
 </body>
 </html>

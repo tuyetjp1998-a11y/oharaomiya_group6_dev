@@ -4,6 +4,7 @@ import bean.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import safety.auth.NotificationIntroAction;
 import tool.Action;
 
 public class HomeAction extends Action {
@@ -36,13 +37,26 @@ public class HomeAction extends Action {
             res.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
+        req.setAttribute("checkNotificationIntro",
+                !NotificationIntroAction.wasShownToday(req, user));
 
         // DBへデータ保存 5
         // なし
 
         // レスポンス値をセット 6
+     // レスポンス値をセット 6
         res.setHeader("Cache-Control", "no-store");
         req.setAttribute("pageTitle", "生徒トップ");
+
+        // 通知登録に使用する公開鍵を画面へ渡す
+        String vapidPublicKey =
+                System.getenv("VAPID_PUBLIC_KEY");
+
+        req.setAttribute(
+                "vapidPublicKey",
+                vapidPublicKey == null
+                        ? ""
+                        : vapidPublicKey.strip());
 
         // JSPへフォワード 7
         req.getRequestDispatcher(

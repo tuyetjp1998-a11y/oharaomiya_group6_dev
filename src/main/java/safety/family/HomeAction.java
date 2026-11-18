@@ -10,6 +10,7 @@ import dao.FamilyStudentRequestDao;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import safety.auth.NotificationIntroAction;
 import tool.Action;
 
 /**
@@ -64,7 +65,8 @@ public class HomeAction extends Action {
                     HttpServletResponse.SC_FORBIDDEN);
             return;
         }
-
+        req.setAttribute("checkNotificationIntro",
+                !NotificationIntroAction.wasShownToday(req, user));
         // 承認済みの生徒と申請状況を取得
         students = dao.findByFamilyUserId(user.getId());
 
@@ -81,7 +83,16 @@ public class HomeAction extends Action {
         req.setAttribute("students", students);
         req.setAttribute("pendingRequests", pendingRequests);
         req.setAttribute("rejectedRequests", rejectedRequests);
+        // ログイン期限通知の登録に使用する公開鍵を渡す
+        String vapidPublicKey =
+                System.getenv("VAPID_PUBLIC_KEY");
 
+        req.setAttribute(
+                "vapidPublicKey",
+                vapidPublicKey == null
+                        ? ""
+                        : vapidPublicKey.strip());
+        
         // JSPへフォワード 7
         req.getRequestDispatcher(
                 "/WEB-INF/views/family/home.jsp")

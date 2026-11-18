@@ -1,11 +1,13 @@
 package safety.auth;
 
 import bean.User;
+import dao.LoginTokenDao;
 import dao.WebPushSubscriptionDao;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import tool.Action;
+import tool.LoginTokenUtil;
 
 public class LogoutAction extends Action {
 
@@ -52,6 +54,17 @@ public class LogoutAction extends Action {
 					"画面を開き直してください。");
 			return;
 		}
+		
+		// この端末のログイン維持用トークンを失効させる
+		String loginToken = LoginTokenUtil.readToken(req);
+
+		if (loginToken != null) {
+		    new LoginTokenDao().deleteByTokenHash(
+		            LoginTokenUtil.hashToken(loginToken));
+		}
+
+		// ブラウザーに保存されたトークンを削除する
+		LoginTokenUtil.clearCookie(req, res);
 
 		// ログアウトする保護者の通知登録を削除する
 		Object sessionUser = session.getAttribute("user");
