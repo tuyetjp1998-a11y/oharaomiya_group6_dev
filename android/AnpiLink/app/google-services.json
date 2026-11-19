@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "652881779401",
+    "project_id": "anpilink-e1c6f",
+    "storage_bucket": "anpilink-e1c6f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:652881779401:android:13efa5018869dc83d50b18",
+        "android_client_info": {
+          "package_name": "com.example.anpilink"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-zTovfjJRZpf_2Hixa9sQ2J7av_v4aec"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
