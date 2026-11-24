@@ -18,6 +18,8 @@ public class FamilyRequestReview implements Serializable {
     private String studentName;
     private String studentLoginId;
     private String className;
+    private String status;
+    private String rejectionReason;
     private OffsetDateTime requestedAt;
 
     public long getId() {
@@ -66,6 +68,22 @@ public class FamilyRequestReview implements Serializable {
 
     public void setClassName(String className) {
         this.className = className;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
     }
 
     public OffsetDateTime getRequestedAt() {

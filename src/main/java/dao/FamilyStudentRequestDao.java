@@ -135,7 +135,8 @@ public class FamilyStudentRequestDao extends DAO {
                        student.login_id AS student_login_id,
                        request.status,
                        request.requested_at,
-                       request.reviewed_at
+                       request.reviewed_at,
+                       request.rejection_reason
                 FROM public.family_student_request AS request
                 JOIN public.users AS student
                   ON student.id = request.student_user_id
@@ -170,6 +171,8 @@ public class FamilyStudentRequestDao extends DAO {
                             resultSet.getObject(
                                     "reviewed_at",
                                     OffsetDateTime.class));
+                    request.setRejectionReason(
+                            resultSet.getString("rejection_reason"));
 
                     requests.add(request);
                 }
@@ -193,7 +196,8 @@ public class FamilyStudentRequestDao extends DAO {
                        student.login_id AS student_login_id,
                        request.status,
                        request.requested_at,
-                       request.reviewed_at
+                       request.reviewed_at,
+                       request.rejection_reason
                 FROM public.family_student_request AS request
                 JOIN public.users AS student
                   ON student.id = request.student_user_id
@@ -227,6 +231,8 @@ public class FamilyStudentRequestDao extends DAO {
                             resultSet.getObject(
                                     "reviewed_at",
                                     OffsetDateTime.class));
+                    request.setRejectionReason(
+                            resultSet.getString("rejection_reason"));
 
                     requests.add(request);
                 }

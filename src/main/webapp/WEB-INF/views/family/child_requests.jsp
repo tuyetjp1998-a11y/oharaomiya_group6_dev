@@ -77,7 +77,7 @@
 									</c:when>
 
 									<c:when test="${item.status eq 'REJECTED'}">
-										<p>親子関係を確認できませんでした。 学校へお問い合わせください。</p>
+						<p><c:out value="${item.rejectionReason}" /></p>
 									</c:when>
 								</c:choose>
 							</section>

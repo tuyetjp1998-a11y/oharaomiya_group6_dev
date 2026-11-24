@@ -80,6 +80,10 @@ public class ChildRequestsAction extends Action {
                         "requestedAtText",
                         request.getRequestedAtText());
 
+                item.put(
+                        "rejectionReason",
+                        request.getRejectionReason());
+
                 items.add(item);
             }
 

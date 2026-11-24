@@ -20,7 +20,7 @@ public class FamilyRequestReviewDao extends DAO {
     /**
      * 担当クラスの承認待ち申請を取得する。
      */
-    public List<FamilyRequestReview> findPending(
+    public List<FamilyRequestReview> findForTeacher(
             long teacherUserId, int schoolYear)
             throws NamingException, SQLException {
 
@@ -33,6 +33,8 @@ public class FamilyRequestReviewDao extends DAO {
                        student.name AS student_name,
                        student.login_id AS student_login_id,
                        classroom.class_name,
+                       request.status,
+                       request.rejection_reason,
                        request.requested_at
                 FROM public.family_student_request AS request
                 JOIN public.users AS family
@@ -47,8 +49,7 @@ public class FamilyRequestReviewDao extends DAO {
                   ON tc.class_id = classroom.id
                 JOIN public.users AS teacher
                   ON teacher.id = tc.teacher_user_id
-                WHERE request.status = 'PENDING'
-                  AND tc.teacher_user_id = ?
+                WHERE tc.teacher_user_id = ?
                   AND sc.school_year = ?
                   AND teacher.role = 'TEACHER'
                   AND teacher.active = true
@@ -56,7 +57,12 @@ public class FamilyRequestReviewDao extends DAO {
                   AND family.active = true
                   AND student.role = 'STUDENT'
                   AND student.active = true
-                ORDER BY request.requested_at, request.id
+                ORDER BY CASE request.status
+                           WHEN 'PENDING' THEN 0
+                           ELSE 1
+                         END,
+                         request.requested_at DESC,
+                         request.id DESC
                 """;
 
         try (Connection connection = getConnection();
@@ -82,6 +88,10 @@ public class FamilyRequestReviewDao extends DAO {
                             resultSet.getString("student_login_id"));
                     request.setClassName(
                             resultSet.getString("class_name"));
+                    request.setStatus(
+                            resultSet.getString("status"));
+                    request.setRejectionReason(
+                            resultSet.getString("rejection_reason"));
                     request.setRequestedAt(
                             resultSet.getObject(
                                     "requested_at",
@@ -96,6 +106,85 @@ public class FamilyRequestReviewDao extends DAO {
     }
 
     /**
+     * 担当クラスの承認待ち申請を1件取得する。
+     */
+    public FamilyRequestReview findPendingById(
+            long requestId,
+            long teacherUserId,
+            int schoolYear)
+            throws NamingException, SQLException {
+
+        String sql = """
+                SELECT request.id,
+                       family.name AS family_name,
+                       family.login_id AS family_login_id,
+                       student.name AS student_name,
+                       student.login_id AS student_login_id,
+                       classroom.class_name,
+                       request.status,
+                       request.rejection_reason,
+                       request.requested_at
+                FROM public.family_student_request AS request
+                JOIN public.users AS family
+                  ON family.id = request.family_user_id
+                JOIN public.users AS student
+                  ON student.id = request.student_user_id
+                JOIN public.student_class AS sc
+                  ON sc.student_user_id = student.id
+                JOIN public.school_class AS classroom
+                  ON classroom.id = sc.class_id
+                JOIN public.teacher_class AS tc
+                  ON tc.class_id = classroom.id
+                WHERE request.id = ?
+                  AND request.status = 'PENDING'
+                  AND tc.teacher_user_id = ?
+                  AND sc.school_year = ?
+                  AND family.role = 'FAMILY'
+                  AND family.active = true
+                  AND student.role = 'STUDENT'
+                  AND student.active = true
+                """;
+
+        try (Connection connection = getConnection();
+             PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
+
+            statement.setLong(1, requestId);
+            statement.setLong(2, teacherUserId);
+            statement.setInt(3, schoolYear);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (!resultSet.next()) {
+                    return null;
+                }
+
+                FamilyRequestReview request =
+                        new FamilyRequestReview();
+                request.setId(resultSet.getLong("id"));
+                request.setFamilyName(
+                        resultSet.getString("family_name"));
+                request.setFamilyLoginId(
+                        resultSet.getString("family_login_id"));
+                request.setStudentName(
+                        resultSet.getString("student_name"));
+                request.setStudentLoginId(
+                        resultSet.getString("student_login_id"));
+                request.setClassName(
+                        resultSet.getString("class_name"));
+                request.setStatus(
+                        resultSet.getString("status"));
+                request.setRejectionReason(
+                        resultSet.getString("rejection_reason"));
+                request.setRequestedAt(
+                        resultSet.getObject(
+                                "requested_at",
+                                OffsetDateTime.class));
+                return request;
+            }
+        }
+    }
+
+    /**
      * 担当クラスの申請を承認または却下する。
      * 承認時の関連付け登録と申請更新は同じトランザクションで行う。
      *
@@ -106,7 +195,8 @@ public class FamilyRequestReviewDao extends DAO {
             long requestId,
             long teacherUserId,
             int schoolYear,
-            String decision)
+            String decision,
+            String rejectionReason)
             throws NamingException, SQLException {
 
         if (!"APPROVED".equals(decision)
@@ -156,7 +246,8 @@ public class FamilyRequestReviewDao extends DAO {
                 UPDATE public.family_student_request
                 SET status = ?,
                     reviewed_by = ?,
-                    reviewed_at = CURRENT_TIMESTAMP
+                    reviewed_at = CURRENT_TIMESTAMP,
+                    rejection_reason = ?
                 WHERE id = ?
                   AND status = 'PENDING'
                 """;
@@ -208,7 +299,12 @@ public class FamilyRequestReviewDao extends DAO {
 
                     statement.setString(1, decision);
                     statement.setLong(2, teacherUserId);
-                    statement.setLong(3, requestId);
+                    statement.setString(
+                            3,
+                            "REJECTED".equals(decision)
+                                    ? rejectionReason
+                                    : null);
+                    statement.setLong(4, requestId);
 
                     if (statement.executeUpdate() != 1) {
                         throw new SQLException(

@@ -22,6 +22,7 @@ public class FamilyStudentRequest implements Serializable {
 
 	// 審査日時
 	private OffsetDateTime reviewedAt;
+	private String rejectionReason;
 
 	public FamilyStudentRequest() {
 	}
@@ -64,6 +65,14 @@ public class FamilyStudentRequest implements Serializable {
 
 	public void setReviewedAt(OffsetDateTime reviewedAt) {
 		this.reviewedAt = reviewedAt;
+	}
+
+	public String getRejectionReason() {
+		return rejectionReason;
+	}
+
+	public void setRejectionReason(String rejectionReason) {
+		this.rejectionReason = rejectionReason;
 	}
 
 	public String getRequestedAtText() {

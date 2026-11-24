@@ -7,6 +7,7 @@ import java.util.List;
 import bean.FamilyRequestReview;
 import bean.User;
 import dao.FamilyRequestReviewDao;
+import dao.TeacherClassDao;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -67,7 +68,7 @@ public class FamilyRequestsAction extends Action {
                 ? today.getYear()
                 : today.getYear() - 1;
 
-        requests = dao.findPending(user.getId(), schoolYear);
+        requests = dao.findForTeacher(user.getId(), schoolYear);
 
         // DBへデータ保存 5
         // なし
@@ -75,11 +76,11 @@ public class FamilyRequestsAction extends Action {
         // レスポンス値をセット 6
         req.setAttribute("requests", requests);
         req.setAttribute("schoolYear", schoolYear);
-
+        req.setAttribute("showFamilyRequests", true);
         req.setAttribute(
-                "reviewMessage",
-                session.getAttribute("reviewMessage"));
-        session.removeAttribute("reviewMessage");
+                "assignedClasses",
+                new TeacherClassDao().findAssignedClasses(
+                        user.getId(), schoolYear));
 
         // JSPへフォワード 7
         req.getRequestDispatcher(

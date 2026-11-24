@@ -190,6 +190,14 @@ button,input,select,textarea {
   color: var(--r);
 }
 
+/* 安否回答：困っている */
+.worried,
+.status-badge.worried,
+.badge.worried {
+  background: #fff4d5;
+  color: #765300;
+}
+
 .detail {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -3026,6 +3034,167 @@ button,input,select,textarea {
     display: flex;
     gap: 8px;
     margin: 0;
+}
+
+/* 保護者の申請・承認 */
+.portal-main > .card {
+  width: 100%;
+  max-width: none;
+}
+
+.request-list + .request-list {
+  margin-top: 16px;
+}
+
+.request-heading,
+.request-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.request-heading h2 {
+  margin: 0;
+}
+
+.request-pending {
+  color: #88600c;
+  background: #fff5dc;
+}
+
+.request-rejected {
+  color: #b73d4f;
+  background: #fff0f2;
+}
+
+.request-help,
+.request-list p {
+  color: var(--m);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.request-list p {
+  margin-bottom: 0;
+}
+
+.request-details {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr);
+  gap: 20px;
+  margin: 24px 0 0;
+}
+
+.request-details dt {
+  color: var(--m);
+}
+
+.request-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.request-actions {
+  justify-content: flex-start;
+  margin-top: 20px;
+}
+
+.portal-main .request-actions > :is(button, a) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 180px;
+  max-width: 100%;
+  min-height: 48px;
+  margin: 0;
+  padding: 12px 20px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* 職員ポータルの主要操作ボタンを設計の寸法に合わせる。 */
+.portal-main .primary.group-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 180px;
+  max-width: 100%;
+  min-height: 48px;
+  padding: 12px 20px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* 「困っている」の全校共通項目 */
+.danger-types-panel,
+.portal-main > .danger-types-panel {
+  width: 100%;
+  max-width: none;
+}
+
+.danger-types-panel h2 {
+  margin-top: 0;
+}
+
+.danger-types-scope {
+  margin-bottom: 0;
+  color: var(--m);
+  font-size: 14px;
+}
+
+.danger-types-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.danger-types-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid var(--l);
+}
+
+.danger-type-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+.danger-type-actions > :is(button, a),
+.danger-type-return {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 180px;
+  min-height: 48px;
+  font: inherit;
+}
+
+.danger-type-actions button {
+  border: 0;
+  cursor: pointer;
+}
+
+.danger-type-delete {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border: 1px solid #efcbd1;
+  border-radius: 8px;
+  color: var(--r);
+  background: var(--w);
+  font-size: 14px;
+}
+
+.danger-type-delete:hover,
+.danger-type-delete:focus-visible {
+  background: #fff5f6;
 }
 
 .family-review-buttons button {
