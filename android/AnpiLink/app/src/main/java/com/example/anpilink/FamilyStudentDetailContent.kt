@@ -175,13 +175,15 @@ private fun FamilyReportCard(
 ) {
     val report = detail.latestReport
 
-    val detailLabel = when (report?.dangerType) {
+    val detailLabel = report?.dangerTypeName?.takeIf { it.isNotBlank() }
+        ?: when (report?.dangerType) {
         "ACCIDENT" -> "事故"
         "EARTHQUAKE" -> "地震"
         "FIRE" -> "火災"
         "LANDSLIDE" -> "土砂崩れ"
         "HEATSTROKE" -> "熱中症"
-        else -> null
+        null -> null
+        else -> "種類不明"
     }
 
     val statusText = when (report?.status) {
@@ -286,6 +288,18 @@ private fun FamilyReportCard(
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.End
                     )
+                }
+            }
+
+            // 困っている回答に入力されたコメントだけを表示する。
+            val comment = report?.takeIf { it.status == "WORRIED" }
+                ?.comment?.takeIf { it.isNotBlank() }
+            if (comment != null) {
+                HorizontalDivider(
+                    color = Color(0xFFEDF1F4)
+                )
+                FamilyDetailRow(label = "コメント") {
+                    FamilyDetailValue(text = comment)
                 }
             }
 

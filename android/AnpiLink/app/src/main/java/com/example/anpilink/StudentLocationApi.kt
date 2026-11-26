@@ -16,7 +16,8 @@ data class StudentLatestReportLocation(
     val reportedAt: String,
     val location: StudentReportLocation?,
     val status: String? = null,
-    val dangerType: String? = null
+    val dangerType: String? = null,
+    val dangerTypeName: String? = null
 )
 
 /**
@@ -187,7 +188,8 @@ object StudentLocationApi {
                 location = location,
                 // 旧サーバーで項目がない場合は不明として扱う。
                 status = if (report.isNull("status")) null else report.getString("status"),
-                dangerType = if (report.isNull("dangerType")) null else report.getString("dangerType")
+                dangerType = if (report.isNull("dangerType")) null else report.getString("dangerType"),
+                dangerTypeName = if (report.isNull("dangerTypeName")) null else report.getString("dangerTypeName")
             )
         } finally {
             connection.disconnect()

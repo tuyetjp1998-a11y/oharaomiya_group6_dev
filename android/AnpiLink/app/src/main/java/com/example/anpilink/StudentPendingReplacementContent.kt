@@ -48,10 +48,40 @@ fun StudentPendingReplacementContent(
     }
     var detail by remember(original.requestId) {
         mutableStateOf(original.dangerType?.takeIf {
-            it in setOf("ACCIDENT", "EARTHQUAKE", "FIRE", "LANDSLIDE", "HEATSTROKE")
+            original.status == "WORRIED" && SafetyReportApi.isValidWorriedTypeCode(it)
         })
     }
     var comment by remember(original.requestId) { mutableStateOf(original.comment ?: "") }
+    val cacheKey = "${ApiConfig.BASE_URL}:${session.userId}"
+    var choices by remember(original.requestId, cacheKey) {
+        mutableStateOf(readWorriedCatalog(context, cacheKey).orEmpty())
+    }
+    var loadingChoices by remember(original.requestId, cacheKey) { mutableStateOf(true) }
+    var catalogMessage by remember(original.requestId, cacheKey) { mutableStateOf<String?>(null) }
+    var catalogAuthFailed by remember(original.requestId, cacheKey) { mutableStateOf(false) }
+    LaunchedEffect(session, original.requestId) {
+        try {
+            val fresh = SafetyReportApi.fetchWorriedTypes(session).map { it.code to it.name }
+            writeWorriedCatalog(context, cacheKey, fresh)
+            choices = fresh
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: SafetyReportApiException) {
+            if (e.statusCode == 401 || e.statusCode == 403) {
+                catalogAuthFailed = true
+                choices = emptyList()
+                catalogMessage = "再度ログインしてください。"
+            } else {
+                catalogMessage = "一覧を取得できないため、前回の項目を表示しています。"
+            }
+        } catch (e: IOException) {
+            catalogMessage = "一覧を取得できません。保存済みの項目またはコメントで回答できます。"
+        } catch (e: JSONException) {
+            catalogMessage = "一覧を取得できません。保存済みの項目またはコメントで回答できます。"
+        } finally {
+            loadingChoices = false
+        }
+    }
     var saving by remember(original.requestId) { mutableStateOf(false) }
     var error by remember(original.requestId) { mutableStateOf<String?>(null) }
     LaunchedEffect(saving) { onBusyChanged(saving) }
@@ -59,7 +89,7 @@ fun StudentPendingReplacementContent(
     BackHandler { if (!saving) onBack() }
 
     fun save() {
-        if (saving) return
+        if (saving || catalogAuthFailed || (status == "WORRIED" && loadingChoices)) return
         if (status == "WORRIED" && detail == null && comment.isBlank()) {
             error = "項目を選択するか、コメントを入力してください。"
             return
@@ -90,7 +120,8 @@ fun StudentPendingReplacementContent(
                     dangerType = if (status == "WORRIED") detail else null,
                     comment = if (status == "WORRIED") comment else null,
                     location = location,
-                    replacementRequestId = original.requestId
+                    replacementRequestId = original.requestId,
+                    dispatchId = original.dispatchId
                 )
                 onSaved()
             } catch (e: CancellationException) {
@@ -121,13 +152,18 @@ fun StudentPendingReplacementContent(
             Text(if (status == "WORRIED") "✓ 困っている" else "困っている")
         }
         if (status == "WORRIED") {
-            val choices = listOf(
-                "ACCIDENT" to "事故", "EARTHQUAKE" to "地震", "FIRE" to "火災",
-                "LANDSLIDE" to "土砂崩れ", "HEATSTROKE" to "熱中症"
-            )
-            choices.forEach { (code, label) ->
+            if (loadingChoices) Text("読み込み中…", color = Color(0xFF617991))
+            catalogMessage?.let { Text(it, color = Color(0xFF617991), fontSize = 13.sp) }
+            // 削除された項目は新規選択肢に戻さない。元の回答だけは明示して保持する。
+            val oldCode = original.dangerType?.takeIf { original.status == "WORRIED" &&
+                SafetyReportApi.isValidWorriedTypeCode(it) }
+            val displayedChoices = if (!catalogAuthFailed && oldCode != null && detail == oldCode &&
+                choices.none { it.first == oldCode }) {
+                choices + (oldCode to ((original.dangerTypeName ?: "種類不明") + "（保存済み）"))
+            } else choices
+            displayedChoices.forEach { (code, label) ->
                 OutlinedButton(onClick = { detail = if (detail == code) null else code },
-                    enabled = !saving, modifier = Modifier.fillMaxWidth(),
+                    enabled = !saving && !loadingChoices && !catalogAuthFailed, modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF2866C9))) {
                     Text(if (detail == code) "✓ $label" else label)
                 }
@@ -137,7 +173,8 @@ fun StudentPendingReplacementContent(
                 modifier = Modifier.fillMaxWidth(), minLines = 3)
         }
         error?.let { Text(it, color = Color(0xFFAC3341), fontSize = 14.sp) }
-        Button(onClick = { save() }, enabled = !saving,
+        Button(onClick = { save() }, enabled = !saving && !catalogAuthFailed &&
+            (status != "WORRIED" || !loadingChoices),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2866C9), contentColor = Color.White),
             modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
             Text(if (saving) "保存中…" else "新しい回答を保存")

@@ -70,7 +70,6 @@ fun StudentConnectionContent(
     // 送信履歴を確認した呼び出し元だけがtrueを渡す。
     canReplacePending: Boolean = false
 ) {
-
     val context = LocalContext.current.applicationContext
     val scope = rememberCoroutineScope()
     var network by remember(session) { mutableStateOf(connectionNetwork(context)) }
@@ -264,7 +263,7 @@ fun StudentConnectionContent(
                                 color = badge.third, fontWeight = FontWeight.Bold)
                         }
                     }
-                    ConnectionField("内容", connectionDetail(content.dangerType))
+                    ConnectionField("内容", connectionDetail(context, content))
                     ConnectionField("コメント", content.comment ?: "なし")
                     ConnectionField("保存日時", connectionTime(content.savedAt))
                 }
@@ -344,15 +343,22 @@ private fun ConnectionField(label: String, value: String) {
     }
 }
 
-private fun connectionDetail(value: String?): String = when (value) {
+private fun connectionDetail(context: Context, report: PendingSafetyReport): String {
+    val value = report.dangerType ?: return "なし"
+    if (report.status == "WORRIED") {
+        report.dangerTypeName?.takeIf { it.isNotBlank() }?.let { return it }
+        readWorriedCatalog(context, "${report.serverBaseUrl}:${report.userId}")
+            ?.firstOrNull { it.first == value }?.second?.let { return it }
+    }
+    return when (value) {
     "ACCIDENT" -> "事故"
     "EARTHQUAKE" -> "地震"
     "FIRE" -> "火災"
     "LANDSLIDE" -> "土砂崩れ"
     "HEATSTROKE" -> "熱中症"
     "STALKING" -> "不審者・つきまとい"
-    null -> "なし"
-    else -> value
+    else -> "種類不明"
+    }
 }
 
 private fun connectionTime(value: String): String = try {

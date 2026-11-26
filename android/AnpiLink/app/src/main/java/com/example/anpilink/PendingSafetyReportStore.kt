@@ -25,7 +25,9 @@ data class PendingSafetyReport(
     val comment: String?,
     val location: StudentReportLocation?,
     val savedAt: String,
-    val attempted: Boolean = true
+    val attempted: Boolean = true,
+    val dispatchId: Long? = null,
+    val dangerTypeName: String? = null
 )
 
 /**
@@ -45,14 +47,6 @@ object PendingSafetyReportStore {
         "FIRE",
         "LANDSLIDE",
         "STALKING"
-    )
-
-    private val worriedTypes = setOf(
-        "ACCIDENT",
-        "EARTHQUAKE",
-        "FIRE",
-        "LANDSLIDE",
-        "HEATSTROKE"
     )
 
     /**
@@ -79,13 +73,15 @@ object PendingSafetyReportStore {
         dangerType: String? = null,
         comment: String? = null,
         location: StudentReportLocation? = null,
-        replacementRequestId: String? = null
+        replacementRequestId: String? = null,
+        dispatchId: Long? = null
     ): PendingSafetyReport = withContext(Dispatchers.IO) {
         synchronized(lock) {
             require(userId > 0) {
                 "利用者IDが正しくありません。"
             }
 
+            require(dispatchId == null || dispatchId > 0)
             val normalizedComment = comment
                 ?.trim()
                 ?.takeIf { it.isNotBlank() }
@@ -102,7 +98,7 @@ object PendingSafetyReportStore {
 
                 "WORRIED" ->
                     (dangerType == null ||
-                            dangerType in worriedTypes) &&
+                            SafetyReportApi.isValidWorriedTypeCode(dangerType)) &&
                             (dangerType != null ||
                                     normalizedComment != null)
 
@@ -133,6 +129,14 @@ object PendingSafetyReportStore {
                 )
             }
 
+            // 表示名は端末内のメタデータ。送信本文・送信IDには含めない。
+            val detailName = if (status == "WORRIED" && dangerType != null) {
+                readWorriedCatalog(appContext, "${ApiConfig.BASE_URL}:$userId")
+                    ?.firstOrNull { it.first == dangerType }?.second
+                    ?: current?.takeIf { it.status == "WORRIED" && it.dangerType == dangerType }
+                        ?.dangerTypeName
+            } else null
+
             val pending = PendingSafetyReport(
                 serverBaseUrl = ApiConfig.BASE_URL,
                 userId = userId,
@@ -142,12 +146,15 @@ object PendingSafetyReportStore {
                 comment = normalizedComment,
                 location = location,
                 savedAt = Instant.now().toString(),
-                attempted = false
+                attempted = false,
+                dispatchId = if (replacementRequestId != null) current?.dispatchId else dispatchId,
+                dangerTypeName = detailName
             )
 
             // APIの本文上限も保存前に確認する。
             val answer = JSONObject()
                 .put("requestId", pending.requestId)
+                .put("dispatchId", pending.dispatchId ?: JSONObject.NULL)
                 .put("status", pending.status)
                 .put(
                     "dangerType",
@@ -183,6 +190,7 @@ object PendingSafetyReportStore {
                 .put("serverBaseUrl", pending.serverBaseUrl)
                 .put("userId", pending.userId)
                 .put("savedAt", pending.savedAt)
+                .put("dangerTypeName", pending.dangerTypeName ?: JSONObject.NULL)
                 .put("answer", answer)
 
             val bytes = document.toString()
@@ -428,7 +436,12 @@ object PendingSafetyReportStore {
                 },
                 location = location,
                 savedAt = document.getString("savedAt"),
-                attempted = document.optBoolean("attempted", true)
+                attempted = document.optBoolean("attempted", true),
+                dangerTypeName = if (document.isNull("dangerTypeName")) null
+                    else document.getString("dangerTypeName").takeIf { it.isNotBlank() },
+                dispatchId = if (answer.isNull("dispatchId")) null else answer.getLong("dispatchId").also {
+                    if (it <= 0) throw IOException("配信IDが正しくありません。")
+                }
             )
 
         } catch (e: JSONException) {

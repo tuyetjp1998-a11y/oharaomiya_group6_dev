@@ -13,7 +13,8 @@ data class FamilyChildRequestItem(
     val requestId: Long,
     val studentLoginId: String,
     val status: String,
-    val requestedAtText: String
+    val requestedAtText: String,
+    val rejectionReason: String?
 )
 
 /**
@@ -121,7 +122,14 @@ object FamilyChildRequestsApi {
                             status =
                                 item.getString("status"),
                             requestedAtText =
-                                item.getString("requestedAtText")
+                                item.getString("requestedAtText"),
+                            rejectionReason =
+                                if (item.isNull("rejectionReason")) {
+                                    null
+                                } else {
+                                    item.getString("rejectionReason")
+                                        .ifBlank { null }
+                                }
                         )
                     )
                 }

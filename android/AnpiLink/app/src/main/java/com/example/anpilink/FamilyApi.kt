@@ -36,7 +36,8 @@ data class FamilyReportDetail(
     val longitude: Double?,
     val locationAccuracy: Double?,
     val locationAcquiredAt: String?,
-    val comment: String? = null
+    val comment: String? = null,
+    val dangerTypeName: String? = null
 )
 
 /**
@@ -50,6 +51,30 @@ data class FamilyStudentDetail(
 /**
  * 保護者に関連付けられた生徒一覧を取得する。
  */
+
+sealed interface FamilyNotice {
+    val createdAt: String
+    val readAt: String?
+}
+
+data class FamilySchoolNotice(
+    val dispatchId: Long,
+    val title: String,
+    val message: String,
+    override val createdAt: String,
+    override val readAt: String? = null
+) : FamilyNotice
+
+data class FamilyReminder(
+    val reminderId: Long,
+    val dispatchId: Long,
+    val studentName: String,
+    val title: String,
+    val deadlineAt: String,
+    override val createdAt: String,
+    override val readAt: String? = null
+) : FamilyNotice
+
 object FamilyApi {
 
     private const val STUDENTS_URL =
@@ -293,6 +318,11 @@ object FamilyApi {
                         null
                     } else {
                         value.getString("comment")
+                    },
+                    dangerTypeName = if (value.isNull("dangerTypeName")) {
+                        null
+                    } else {
+                        value.getString("dangerTypeName")
                     }
                 )
             }
@@ -304,6 +334,125 @@ object FamilyApi {
             )
         } finally {
             connection.disconnect()
+        }
+    }
+
+    suspend fun getReminders(session: LoginSession): List<FamilyReminder> =
+        withSessionToken(session) { token ->
+            withContext(Dispatchers.IO) {
+                val connection = URL(ApiConfig.BASE_URL + "/api/family/ReminderList.action")
+                    .openConnection() as HttpURLConnection
+                try {
+                    connection.requestMethod = "GET"
+                    connection.connectTimeout = 15_000
+                    connection.readTimeout = 30_000
+                    connection.instanceFollowRedirects = false
+                    connection.useCaches = false
+                    connection.setRequestProperty("Accept", "application/json")
+                    connection.setRequestProperty("Authorization", "Bearer $token")
+                    val code = connection.responseCode
+                    if (code != HttpURLConnection.HTTP_OK) {
+                        connection.errorStream?.close()
+                        throw FamilyApiException(code, "学校からの連絡を取得できませんでした。（HTTP $code）")
+                    }
+                    val array = JSONObject(connection.inputStream.bufferedReader(Charsets.UTF_8)
+                        .use { it.readText() }).getJSONArray("notices")
+                    List(array.length()) { index ->
+                        val item = array.getJSONObject(index)
+                        FamilyReminder(
+                            reminderId = item.getLong("reminderId"),
+                            dispatchId = item.getLong("dispatchId"),
+                            studentName = item.getString("studentName"),
+                            title = item.getString("title"),
+                            deadlineAt = item.getString("deadlineAt"),
+                            createdAt = item.getString("createdAt"),
+                            readAt = if (item.isNull("readAt")) null else item.getString("readAt")
+                        )
+                    }
+                } finally {
+                    connection.disconnect()
+                }
+            }
+        }
+
+    /** 本人宛ての通常通知を取得する。 */
+    suspend fun getSchoolNotices(session: LoginSession): List<FamilySchoolNotice> =
+        withSessionToken(session) { token ->
+            withContext(Dispatchers.IO) {
+                val connection = URL(ApiConfig.BASE_URL + "/api/family/NoticeList.action")
+                    .openConnection() as HttpURLConnection
+                try {
+                    connection.requestMethod = "GET"
+                    connection.connectTimeout = 15_000
+                    connection.readTimeout = 30_000
+                    connection.instanceFollowRedirects = false
+                    connection.useCaches = false
+                    connection.setRequestProperty("Accept", "application/json")
+                    connection.setRequestProperty("Authorization", "Bearer $token")
+                    val code = connection.responseCode
+                    if (code != HttpURLConnection.HTTP_OK) {
+                        connection.errorStream?.close()
+                        throw FamilyApiException(code, "学校からの連絡を取得できませんでした。（HTTP $code）")
+                    }
+                    val array = JSONObject(connection.inputStream.bufferedReader(Charsets.UTF_8)
+                        .use { it.readText() }).getJSONArray("notices")
+                    List(array.length()) { index ->
+                        val item = array.getJSONObject(index)
+                        FamilySchoolNotice(
+                            dispatchId = item.getLong("dispatchId"),
+                            title = item.getString("title"),
+                            message = item.getString("message"),
+                            createdAt = item.getString("createdAt"),
+                            readAt = if (item.isNull("readAt")) null else item.getString("readAt")
+                        )
+                    }
+                } finally {
+                    connection.disconnect()
+                }
+            }
+        }
+
+    /** 本人宛ての通知を既読にする。 */
+    suspend fun markRead(session: LoginSession, notice: FamilyNotice): Unit =
+        withSessionToken(session) { token ->
+            withContext(Dispatchers.IO) {
+                val path = when (notice) {
+                    is FamilyReminder -> "ReminderRead.action?reminderId=${notice.reminderId}"
+                    is FamilySchoolNotice -> "NoticeRead.action?dispatchId=${notice.dispatchId}"
+                }
+                val connection = URL(ApiConfig.BASE_URL + "/api/family/" + path)
+                    .openConnection() as HttpURLConnection
+                try {
+                    connection.requestMethod = "POST"
+                    connection.connectTimeout = 15_000
+                    connection.readTimeout = 30_000
+                    connection.instanceFollowRedirects = false
+                    connection.useCaches = false
+                    connection.setRequestProperty("Accept", "application/json")
+                    connection.setRequestProperty("Authorization", "Bearer $token")
+                    val code = connection.responseCode
+                    if (code != HttpURLConnection.HTTP_OK) {
+                        connection.errorStream?.close()
+                        throw FamilyApiException(code, "既読状態を登録できませんでした。（HTTP $code）")
+                    }
+                    val result = JSONObject(connection.inputStream.bufferedReader(Charsets.UTF_8)
+                        .use { it.readText() })
+                    if (!result.optBoolean("read", false)) {
+                        throw IOException("既読状態を登録できませんでした。")
+                    }
+                } finally {
+                    connection.disconnect()
+                }
+            }
+        }
+
+    /** 通常通知と催促通知を配信日時の新しい順に表示する。 */
+    suspend fun getNotices(session: LoginSession): List<FamilyNotice> {
+        val notices = mutableListOf<FamilyNotice>()
+        notices.addAll(getReminders(session))
+        notices.addAll(getSchoolNotices(session))
+        return notices.sortedByDescending {
+            java.time.OffsetDateTime.parse(it.createdAt).toInstant()
         }
     }
 }
