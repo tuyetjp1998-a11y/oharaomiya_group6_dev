@@ -13,6 +13,7 @@ import bean.TeacherReportRow;
 import bean.User;
 import dao.TeacherClassDao;
 import dao.SafetyReportDao;
+import dao.WorriedTypeDao;
 import bean.SafetyReport;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -134,6 +135,14 @@ public class HomeAction extends Action {
                     return;
                 }
                 req.setAttribute("detailReport", report);
+                // 論理削除済みの項目も過去の回答では名称を表示する。
+                if ("WORRIED".equals(report.getStatus())
+                        && report.getDangerType() != null) {
+                    String name = new WorriedTypeDao().findNameByCode(report.getDangerType());
+                    if (name != null && !name.isBlank()) {
+                        req.setAttribute("detailWorriedName", name);
+                    }
+                }
             }
         }
         req.setAttribute("showRoster", showRoster);

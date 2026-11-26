@@ -265,6 +265,54 @@ public class AndroidPushSubscriptionDao extends DAO {
         }
     }
 
+    /** 配信対象者の有効なAndroid通知先。 */
+    private static final String DISPATCH_TARGETS = """
+            FROM public.android_push_subscription s
+            JOIN public.api_login_token t ON t.id = s.api_login_token_id
+            JOIN public.users u ON u.id = t.user_id
+            JOIN public.safety_dispatch_recipient r ON r.user_id = u.id
+            JOIN public.safety_dispatch d ON d.id = r.dispatch_id
+            WHERE r.dispatch_id = ?
+              AND u.active = TRUE
+              AND u.notification_enabled = TRUE
+              AND u.role IN ('STUDENT', 'FAMILY')
+              AND (d.deadline_at IS NULL OR u.role = 'STUDENT')
+              AND t.expires_at > CURRENT_TIMESTAMP
+            """;
+
+    public List<FamilyNotificationTarget> findDispatchTargets(long dispatchId)
+            throws NamingException, SQLException {
+        String sql = "SELECT s.id, s.api_login_token_id, s.fcm_token "
+                + DISPATCH_TARGETS + " ORDER BY s.id";
+        List<FamilyNotificationTarget> targets = new ArrayList<>();
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setLong(1, dispatchId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    targets.add(new FamilyNotificationTarget(rs.getLong("id"),
+                            rs.getLong("api_login_token_id"), rs.getString("fcm_token")));
+                }
+            }
+        }
+        return targets;
+    }
+
+    /** 送信直前に配信対象、ログイン、通知設定を再確認する。 */
+    public boolean isDispatchTargetEnabled(long dispatchId, FamilyNotificationTarget target)
+            throws NamingException, SQLException {
+        String sql = "SELECT 1 " + DISPATCH_TARGETS
+                + " AND s.id = ? AND s.api_login_token_id = ? AND s.fcm_token = ?";
+        try (Connection c = getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setLong(1, dispatchId);
+            ps.setLong(2, target.getSubscriptionId());
+            ps.setLong(3, target.getLoginTokenId());
+            ps.setString(4, target.getFcmToken());
+            try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
+        }
+    }
+
     /**
      * 通知先の取得時点の情報。
      * トークンをログへ出力しない。

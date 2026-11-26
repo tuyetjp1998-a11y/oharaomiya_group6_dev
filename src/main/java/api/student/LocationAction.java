@@ -11,6 +11,7 @@ import com.google.gson.JsonObject;
 import bean.SafetyReport;
 import bean.User;
 import dao.SafetyReportDao;
+import dao.WorriedTypeDao;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import tool.Action;
@@ -73,6 +74,12 @@ public class LocationAction extends Action {
                 reportJson.addProperty(
                         "dangerType",
                         report.getDangerType());
+
+                // 選択肢から削除済みでも、過去の回答の名称を返す。
+                String dangerTypeName = "WORRIED".equals(report.getStatus())
+                        ? new WorriedTypeDao().findNameByCode(report.getDangerType())
+                        : null;
+                reportJson.addProperty("dangerTypeName", dangerTypeName);
 
                 reportJson.addProperty(
                         "reportedAt",

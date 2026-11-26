@@ -29,6 +29,7 @@ import bean.User;
 import dao.AndroidPushSubscriptionDao;
 import dao.AndroidPushSubscriptionDao.FamilyNotificationTarget;
 import dao.SafetyReportDao;
+import dao.WorriedTypeDao;
 import dao.SafetyReportDao.SubmissionResult;
 import dao.SafetyReportDao.SubmissionStatus;
 import jakarta.servlet.http.HttpServletRequest;
@@ -57,14 +58,6 @@ public class AnswerSubmitAction extends Action {
 			"FIRE",
 			"LANDSLIDE",
 			"STALKING");
-
-	// 新しい「困っている」画面で選択できる項目
-	private static final Set<String> WORRIED_TYPES = Set.of(
-			"ACCIDENT",
-			"EARTHQUAKE",
-			"FIRE",
-			"LANDSLIDE",
-			"HEATSTROKE");
 
 	@Override
 	public void execute(
@@ -141,6 +134,7 @@ public class AnswerSubmitAction extends Action {
 
 		SafetyReport report = new SafetyReport();
 		UUID requestId = null;
+		Long dispatchId;
 
 		try {
 			// 旧アプリはrequestIdなしでも引き続き受け付ける。
@@ -156,6 +150,12 @@ public class AnswerSubmitAction extends Action {
 				}
 
 				requestId = UUID.fromString(requestIdText);
+			}
+
+			// 配信への回答では再送時にも同じ配信IDとリクエストIDを使用する。
+			dispatchId = getDispatchId(body);
+			if (dispatchId != null && requestId == null) {
+				throw new IllegalArgumentException();
 			}
 
 			String status = getString(body, "status");
@@ -205,7 +205,8 @@ public class AnswerSubmitAction extends Action {
 			} else if ("WORRIED".equals(status)) {
 
 				if (dangerType != null
-						&& !WORRIED_TYPES.contains(dangerType)) {
+						&& (dangerType.isBlank() || dangerType.length() > 50
+								|| dangerType.indexOf('\0') >= 0)) {
 
 					throw new IllegalArgumentException();
 				}
@@ -237,6 +238,14 @@ public class AnswerSubmitAction extends Action {
 		boolean newlyCreated;
 
 		try {
+			// 論理削除済みの項目も、オフライン回答の再送に備えて許可する。
+			if ("WORRIED".equals(report.getStatus())
+					&& report.getDangerType() != null
+					&& !new WorriedTypeDao().existsByCode(report.getDangerType())) {
+				writeError(res, 400, "INVALID_INPUT");
+				return;
+			}
+
 			SafetyReportDao reportDao = new SafetyReportDao();
 
 			if (requestId == null) {
@@ -256,7 +265,8 @@ public class AnswerSubmitAction extends Action {
 				SubmissionResult submission = reportDao.saveOnce(
 						report,
 						requestId,
-						payloadHash);
+						payloadHash,
+						dispatchId);
 
 				SubmissionStatus submissionStatus = submission.getStatus();
 
@@ -310,6 +320,9 @@ public class AnswerSubmitAction extends Action {
 
 		JsonObject result = new JsonObject();
 		result.addProperty("reportId", report.getId());
+		if (dispatchId != null) {
+			result.addProperty("dispatchId", dispatchId);
+		}
 		result.addProperty("status", report.getStatus());
 		result.addProperty("dangerType", report.getDangerType());
 		result.addProperty("comment", report.getComment());
@@ -424,8 +437,21 @@ public class AnswerSubmitAction extends Action {
 	}
 
 	/**
-	 * 数値項目を取得し、有限の値であることを確認する。
+	 * 任意の配信IDを正の整数として取得する。
 	 */
+	private static Long getDispatchId(JsonObject body) {
+		JsonElement value = body.get("dispatchId");
+		if (value == null || value.isJsonNull()) {
+			return null;
+		}
+		if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()
+				|| !value.getAsString().matches("[1-9][0-9]{0,18}")) {
+			throw new IllegalArgumentException();
+		}
+		return Long.parseLong(value.getAsString());
+	}
+
+	/** 数値項目を取得する。 */
 	private static double getNumber(
 			JsonObject body,
 			String key) {

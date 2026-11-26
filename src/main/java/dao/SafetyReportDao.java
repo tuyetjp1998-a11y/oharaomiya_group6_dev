@@ -1,5 +1,9 @@
 package dao;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -175,6 +179,14 @@ public class SafetyReportDao extends DAO {
 			String payloadHash)
 			throws NamingException, SQLException {
 
+        return saveOnce(report, requestId, payloadHash, null);
+    }
+
+    /** 配信に対する回答を登録する。配信IDなしの既存送信にも対応する。 */
+    public SubmissionResult saveOnce(SafetyReport report, UUID requestId,
+            String payloadHash, Long dispatchId)
+            throws NamingException, SQLException {
+
 		if (report == null
 				|| report.getUserId() <= 0
 				|| requestId == null
@@ -184,6 +196,20 @@ public class SafetyReportDao extends DAO {
 			throw new IllegalArgumentException(
 					"送信識別情報が正しくありません。");
 		}
+
+        if (dispatchId != null) {
+            if (dispatchId <= 0) {
+                throw new IllegalArgumentException("配信IDが正しくありません。");
+            }
+            // 配信IDも重複判定の対象に含める。旧APIのハッシュは変更しない。
+            try {
+                payloadHash = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                        .digest((payloadHash + ":dispatch:" + dispatchId)
+                                .getBytes(StandardCharsets.UTF_8)));
+            } catch (NoSuchAlgorithmException e) {
+                throw new IllegalStateException(e);
+            }
+        }
 
 		// 同じ利用者の同時送信を順番に処理する。
 		String lockUserSql = """
@@ -211,8 +237,8 @@ public class SafetyReportDao extends DAO {
 				     longitude,
 				     location_accuracy,
 				     location_acquired_at,
-				     comment)
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+				     comment, dispatch_id)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 				RETURNING id, reported_at
 				""";
 
@@ -310,6 +336,26 @@ public class SafetyReportDao extends DAO {
 							previousReport);
 				}
 
+                // 本人が配信対象であることを確認する。期限後の回答も受け付ける。
+                if (dispatchId != null) {
+                    String recipientSql = """
+                            SELECT 1 FROM public.safety_dispatch_recipient r
+                            JOIN public.safety_dispatch d ON d.id = r.dispatch_id
+                            WHERE r.dispatch_id = ? AND r.user_id = ?
+                              AND d.deadline_at IS NOT NULL
+                            """;
+                    try (PreparedStatement statement = connection.prepareStatement(recipientSql)) {
+                        statement.setLong(1, dispatchId);
+                        statement.setLong(2, report.getUserId());
+                        try (ResultSet rs = statement.executeQuery()) {
+                            if (!rs.next()) {
+                                connection.rollback();
+                                return new SubmissionResult(SubmissionStatus.FORBIDDEN, null);
+                            }
+                        }
+                    }
+                }
+
 				long savedId;
 				OffsetDateTime savedAt;
 
@@ -348,6 +394,12 @@ public class SafetyReportDao extends DAO {
 					setNullableString(
 							statement, 8,
 							report.getComment());
+                    if (dispatchId == null) {
+                        statement.setNull(9, Types.BIGINT);
+                    } else {
+                        statement.setLong(9, dispatchId);
+                    }
+
 
 					try (ResultSet resultSet = statement.executeQuery()) {
 

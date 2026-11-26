@@ -13,6 +13,7 @@ import bean.SafetyReport;
 import bean.User;
 import dao.FamilyStudentDao;
 import dao.SafetyReportDao;
+import dao.WorriedTypeDao;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import tool.Action;
@@ -131,6 +132,15 @@ public class StudentStatusAction extends Action {
                 reportJson.addProperty(
                         "dangerType",
                         report.getDangerType());
+
+                // 論理削除済みの項目も過去の回答には表示する。
+                String dangerTypeName = null;
+                if ("WORRIED".equals(report.getStatus())
+                        && report.getDangerType() != null) {
+                    dangerTypeName = new WorriedTypeDao()
+                            .findNameByCode(report.getDangerType());
+                }
+                reportJson.addProperty("dangerTypeName", dangerTypeName);
                 reportJson.addProperty(
                         "comment",
                         report.getComment());

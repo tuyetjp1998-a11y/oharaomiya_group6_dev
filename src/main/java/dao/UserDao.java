@@ -265,6 +265,23 @@ public class UserDao extends DAO {
 		}
 	}
 
+	/** セッションの利用者が現在も有効で、権限が変更されていないか確認する。 */
+	public boolean isActiveWithRole(long userId, String role)
+			throws NamingException, SQLException {
+		String sql = """
+				SELECT 1 FROM public.users
+				WHERE id = ? AND role = ? AND active = TRUE
+				""";
+		try (Connection connection = getConnection();
+				PreparedStatement statement = connection.prepareStatement(sql)) {
+			statement.setLong(1, userId);
+			statement.setString(2, role);
+			try (ResultSet rs = statement.executeQuery()) {
+				return rs.next();
+			}
+		}
+	}
+
 	public static class LoginData {
 
 		private final User user;

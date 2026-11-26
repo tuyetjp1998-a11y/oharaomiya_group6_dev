@@ -97,4 +97,36 @@ public class WorriedTypeDao extends DAO {
             }
         }
     }
+
+    /** 過去の項目も含めてコードの存在を確認する。 */
+    public boolean existsByCode(String code)
+            throws NamingException, SQLException {
+        String sql = """
+                SELECT 1
+                FROM public.worried_type
+                WHERE code = ?
+                """;
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, code);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+        }
+    }
+    /** 無効化済みの項目も含め、過去の回答に対応する名称を取得する。 */
+    public String findNameByCode(String code)
+            throws NamingException, SQLException {
+        if (code == null) return null;
+        String sql = """
+                SELECT name FROM public.worried_type WHERE code = ?
+                """;
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, code);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next() ? resultSet.getString("name") : null;
+            }
+        }
+    }
 }

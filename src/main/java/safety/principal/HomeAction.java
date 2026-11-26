@@ -1,6 +1,8 @@
 package safety.principal;
 
 import bean.User;
+import dao.PrincipalSafetyDao;
+import dao.PrincipalSafetyDao.HomeData;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -19,9 +21,6 @@ public class HomeAction extends Action {
                 : (User) session.getAttribute("user");
 
         // リクエストパラメーターの取得 2
-        // なし
-
-        // DBからデータ取得 3
         // なし
 
         // ビジネスロジック 4
@@ -47,11 +46,15 @@ public class HomeAction extends Action {
             return;
         }
 
-        // DBへデータ保存 5
-        // なし
+        // DBから全校の最新安否状況を取得（校長権限の確認後）
+        PrincipalSafetyDao dao = new PrincipalSafetyDao();
+        HomeData homeData = dao.findHomeData();
+
+        // DBへデータ保存 5（参照のみ）
 
         // レスポンス値をセット 6
         req.setAttribute("pageTitle", "管理ホーム");
+        req.setAttribute("homeData", homeData);
 
         // JSPへフォワード 7
         req.getRequestDispatcher(

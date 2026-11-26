@@ -10,6 +10,7 @@ import javax.naming.NamingException;
 
 import bean.User;
 import dao.LoginTokenDao;
+import dao.UserDao;
 import dao.LoginTokenDao.LoginTokenData;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -37,6 +38,35 @@ public class LoginFilter implements Filter {
 
 		HttpServletRequest req = (HttpServletRequest) request;
 		HttpServletResponse res = (HttpServletResponse) response;
+
+		// 職員・校長の既存セッションをGET/POST共通で確認する。
+		// 生徒・保護者のトークン復元処理は変更しない。
+		HttpSession staffSession = req.getSession(false);
+		Object staffSessionUser = staffSession == null
+				? null : staffSession.getAttribute("user");
+		if (staffSessionUser instanceof User staffUser
+				&& ("TEACHER".equals(staffUser.getRole())
+						|| "PRINCIPAL".equals(staffUser.getRole()))) {
+			res.setHeader("Cache-Control", "no-store");
+			boolean active;
+			try {
+				active = new UserDao().isActiveWithRole(
+						staffUser.getId(), staffUser.getRole());
+			} catch (NamingException | SQLException e) {
+				req.getServletContext().log(
+						"職員セッションの確認に失敗しました。例外="
+								+ e.getClass().getSimpleName());
+				res.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+				return;
+			}
+			if (!active) {
+				staffSession.invalidate();
+				res.setStatus(HttpServletResponse.SC_SEE_OTHER);
+				res.setHeader("Location", req.getContextPath()
+						+ "/safety/auth/Login.action?reauth=true");
+				return;
+			}
+		}
 
 		String path = req.getServletPath();
 

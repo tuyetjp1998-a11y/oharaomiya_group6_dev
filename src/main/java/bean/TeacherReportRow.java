@@ -7,7 +7,7 @@ import java.time.format.DateTimeFormatter;
 /** 職員ホームに表示する生徒の最新回答。 */
 public class TeacherReportRow {
     private static final DateTimeFormatter DISPLAY_TIME =
-            DateTimeFormatter.ofPattern("M/d HH:mm").withZone(ZoneId.of("Asia/Tokyo"));
+            DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss").withZone(ZoneId.of("Asia/Tokyo"));
 
     private final long studentId;
     private final String loginId;
