@@ -44,7 +44,7 @@
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
             <path d="m12 3 10 18H2ZM12 9v5m0 3v.1"/>
           </svg>
-          <span>安否確認</span>
+          <span>通知配信</span>
         </a>
         <a class="nav-item" href="${pageContext.request.contextPath}/safety/principal/Groups.action">
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">

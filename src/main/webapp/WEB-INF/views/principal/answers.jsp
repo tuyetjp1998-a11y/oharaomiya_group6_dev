@@ -104,12 +104,11 @@
                      stroke-linejoin="round">
                     <path d="m12 3 10 18H2ZM12 9v5m0 3v.1"/>
                 </svg>
-                <span>安否確認</span>
+                <span>通知配信</span>
             </a>
 
             <a class="nav-item"
-               href="#"
-               aria-disabled="true">
+               href="${pageContext.request.contextPath}/safety/principal/Groups.action">
                 <svg viewBox="0 0 24 24"
                      aria-hidden="true"
                      fill="none"
@@ -124,8 +123,7 @@
             </a>
 
             <a class="nav-item"
-               href="#"
-               aria-disabled="true">
+               href="${pageContext.request.contextPath}/safety/principal/Staff.action">
                 <svg viewBox="0 0 24 24"
                      aria-hidden="true"
                      fill="none"
@@ -140,8 +138,7 @@
             </a>
 
             <a class="nav-item"
-               href="#"
-               aria-disabled="true">
+               href="${pageContext.request.contextPath}/safety/principal/DangerTypes.action">
                 <svg viewBox="0 0 24 24"
                      aria-hidden="true"
                      fill="none"

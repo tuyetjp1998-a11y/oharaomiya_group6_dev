@@ -124,12 +124,11 @@
 
             </svg>
 
-            <span>安否確認</span>
+            <span>通知配信</span>
         </a>
 
         <a class="nav-item"
-           href="#"
-           aria-disabled="true">
+           href="${pageContext.request.contextPath}/safety/principal/Groups.action">
 
             <svg viewBox="0 0 24 24"
                  aria-hidden="true"
@@ -148,8 +147,7 @@
         </a>
 
         <a class="nav-item"
-           href="#"
-           aria-disabled="true">
+           href="${pageContext.request.contextPath}/safety/principal/Staff.action">
 
             <svg viewBox="0 0 24 24"
                  aria-hidden="true"
@@ -168,8 +166,7 @@
         </a>
 
         <a class="nav-item"
-           href="#"
-           aria-disabled="true">
+           href="${pageContext.request.contextPath}/safety/principal/DangerTypes.action">
 
             <svg viewBox="0 0 24 24"
                  aria-hidden="true"

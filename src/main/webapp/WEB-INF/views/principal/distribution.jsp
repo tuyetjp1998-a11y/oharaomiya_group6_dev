@@ -10,7 +10,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>安否確認 | AnpiLink</title>
+    <title>通知配信 | AnpiLink</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css?v=20261124-3">
   </head>
   <body class="a admin-portal">
@@ -42,23 +42,23 @@
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
             <path d="m12 3 10 18H2ZM12 9v5m0 3v.1"/>
           </svg>
-          <span>安否確認</span>
+          <span>通知配信</span>
         </a>
-        <a class="nav-item " href="#" aria-disabled="true">
+        <a class="nav-item " href="${pageContext.request.contextPath}/safety/principal/Groups.action">
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="9" cy="8" r="3"/>
             <path d="M3 20v-3a6 6 0 0 1 12 0v3M17 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 5"/>
           </svg>
           <span>グループ管理</span>
         </a>
-        <a class="nav-item " href="#" aria-disabled="true">
+        <a class="nav-item " href="${pageContext.request.contextPath}/safety/principal/Staff.action">
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="9" cy="8" r="3"/>
             <path d="M3 20v-3a6 6 0 0 1 12 0v3M17 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 5"/>
           </svg>
           <span>職員管理</span>
         </a>
-        <a class="nav-item " href="#" aria-disabled="true">
+        <a class="nav-item " href="${pageContext.request.contextPath}/safety/principal/DangerTypes.action">
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
             <path d="m12 3 10 18H2ZM12 9v5m0 3v.1"/>
           </svg>
@@ -67,7 +67,7 @@
         <footer class="app-footer portal-footer">＠AnpiLink</footer>
       </aside>
       <main class="portal-main">
-        <h1>安否確認</h1>
+        <h1>通知配信</h1>
         <form class="card form" action="${submitUrl}" method="post">
           <input type="hidden" name="csrfToken" value="<c:out value='${sessionScope.csrfToken}' />">
           <c:if test="${not empty dispatchError}">
