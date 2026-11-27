@@ -18,6 +18,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,6 +36,9 @@ import java.io.IOException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import org.json.JSONException
+import org.json.JSONArray
+import org.json.JSONObject
+import android.content.Context
 import androidx.compose.ui.platform.LocalContext
 
 /**
@@ -44,17 +48,18 @@ import androidx.compose.ui.platform.LocalContext
 fun StudentAnswerContent(
     session: LoginSession,
     onHome: () -> Unit,
-    onSendingChanged: (Boolean) -> Unit = {}
+    onSendingChanged: (Boolean) -> Unit = {},
+    dispatchId: Long? = null
 ) {
-    var showWorried by rememberSaveable(session.userId) {
+    var showWorried by rememberSaveable(session.userId, dispatchId) {
         mutableStateOf(false)
     }
 
-    var selectedDetail by rememberSaveable(session.userId) {
+    var selectedDetail by rememberSaveable(session.userId, dispatchId) {
         mutableStateOf<String?>(null)
     }
 
-    var comment by rememberSaveable(session.userId) {
+    var comment by rememberSaveable(session.userId, dispatchId) {
         mutableStateOf("")
     }
 
@@ -79,14 +84,51 @@ fun StudentAnswerContent(
     val worriedText = Color(0xFF765300)
     val worriedBorder = Color(0xFFA8842B)
 
-    val details = remember {
-        listOf(
-            "ACCIDENT" to "事故",
-            "EARTHQUAKE" to "地震",
-            "FIRE" to "火災",
-            "LANDSLIDE" to "土砂崩れ",
-            "HEATSTROKE" to "熱中症"
-        )
+    // 接続先・利用者ごとに直近の正常な一覧を保存する。空の一覧も保存する。
+    val cacheKey = "${ApiConfig.BASE_URL}:${session.userId}"
+    var details by remember(cacheKey) {
+        mutableStateOf<List<Pair<String, String>>>(emptyList())
+    }
+    var loadingDetails by remember(cacheKey) { mutableStateOf(true) }
+    var catalogMessage by remember(cacheKey) { mutableStateOf<String?>(null) }
+    var catalogAuthFailed by remember(cacheKey) { mutableStateOf(false) }
+
+    LaunchedEffect(showWorried, session, dispatchId) {
+        if (!showWorried) return@LaunchedEffect
+        loadingDetails = true
+        catalogMessage = null
+        catalogAuthFailed = false
+        val cached = readWorriedCatalog(context, cacheKey)
+        try {
+            val fresh = SafetyReportApi.fetchWorriedTypes(session)
+                .map { it.code to it.name }
+            details = fresh
+            writeWorriedCatalog(context, cacheKey, fresh)
+            if (fresh.isEmpty()) {
+                catalogMessage = "選択できる項目がありません。コメントを入力してください。"
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: SafetyReportApiException) {
+            if (e.statusCode == 401 || e.statusCode == 403) {
+                details = emptyList()
+                catalogAuthFailed = true
+                catalogMessage = e.message ?: "再度ログインしてください。"
+            } else {
+                details = cached.orEmpty()
+                catalogMessage = worriedCatalogFallbackMessage(cached)
+            }
+        } catch (e: IOException) {
+            details = cached.orEmpty()
+            catalogMessage = worriedCatalogFallbackMessage(cached)
+        } catch (e: JSONException) {
+            details = cached.orEmpty()
+            catalogMessage = worriedCatalogFallbackMessage(cached)
+        }
+        if (details.none { it.first == selectedDetail }) {
+            selectedDetail = null
+        }
+        loadingDetails = false
     }
 
     // 画面から離れた場合も親画面の送信中状態を解除する。
@@ -112,7 +154,8 @@ fun StudentAnswerContent(
     }
 
     fun submitAnswer(status: String) {
-        if (sending || savedReport != null) {
+        if (sending || savedReport != null ||
+            (status == "WORRIED" && (loadingDetails || catalogAuthFailed))) {
             return
         }
 
@@ -149,7 +192,8 @@ fun StudentAnswerContent(
                     session = session,
                     status = status,
                     dangerType = detail,
-                    comment = answerComment
+                    comment = answerComment,
+                    dispatchId = dispatchId
                 )
 
                 val result = PendingSafetyReportSender.send(
@@ -288,16 +332,24 @@ fun StudentAnswerContent(
                 foreground = worriedText,
                 borderColor = worriedBorder,
                 onClick = {
+                    loadingDetails = true
                     showWorried = true
                     errorMessage = null
                 }
             )
 
         } else {
+            if (loadingDetails) {
+                Text("困っている内容を取得しています…", color = blue, fontSize = 13.sp)
+            } else {
+                catalogMessage?.let {
+                    Text(it, color = navy, fontSize = 13.sp)
+                }
+            }
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                details.chunked(2).forEach { pair ->
+                (if (loadingDetails) emptyList() else details).chunked(2).forEach { pair ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement =
@@ -317,7 +369,7 @@ fun StudentAnswerContent(
 
                                     errorMessage = null
                                 },
-                                enabled = !sending,
+                                enabled = !sending && !loadingDetails && !catalogAuthFailed,
                                 selected = selected,
                                 modifier = Modifier
                                     .weight(1f)
@@ -391,7 +443,7 @@ fun StudentAnswerContent(
             }
 
             Button(
-                enabled = !sending,
+                enabled = !sending && !loadingDetails && !catalogAuthFailed,
                 onClick = {
                     submitAnswer("WORRIED")
                 },
@@ -459,3 +511,43 @@ private fun StudentAnswerChoice(
         )
     }
 }
+
+/** null は未取得または破損、空リストは取得済みの空一覧を表す。 */
+internal fun readWorriedCatalog(context: Context, key: String): List<Pair<String, String>>? {
+    return try {
+        val raw = context.getSharedPreferences("worried_type_catalog", Context.MODE_PRIVATE)
+            .getString(key, null) ?: return null
+        val array = JSONArray(raw)
+        val result = ArrayList<Pair<String, String>>(array.length())
+        val codes = HashSet<String>()
+        for (i in 0 until array.length()) {
+            val item = array.getJSONObject(i)
+            val code = item.getString("code")
+            val name = item.getString("name")
+            if (!SafetyReportApi.isValidWorriedTypeCode(code) ||
+                name.isBlank() || !codes.add(code)) return null
+            result.add(code to name)
+        }
+        result
+    } catch (e: JSONException) {
+        null
+    } catch (e: ClassCastException) {
+        null
+    }
+}
+
+internal fun writeWorriedCatalog(context: Context, key: String, items: List<Pair<String, String>>) {
+    val array = JSONArray()
+    items.forEach { (code, name) ->
+        array.put(JSONObject().put("code", code).put("name", name))
+    }
+    context.getSharedPreferences("worried_type_catalog", Context.MODE_PRIVATE)
+        .edit().putString(key, array.toString()).apply()
+}
+
+private fun worriedCatalogFallbackMessage(cached: List<Pair<String, String>>?): String =
+    if (cached.isNullOrEmpty()) {
+        "一覧を取得できません。コメントで回答できます。"
+    } else {
+        "一覧を取得できないため、前回取得した項目を表示しています。"
+    }

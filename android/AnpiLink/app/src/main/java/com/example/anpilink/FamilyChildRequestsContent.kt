@@ -242,9 +242,9 @@ private fun FamilyRequestHistoryCard(
 
                 "REJECTED" -> {
                     Text(
-                        text =
-                            "親子関係を確認できませんでした。" +
-                                    "学校へお問い合わせください。",
+                        text = item.rejectionReason
+                            ?: "親子関係を確認できませんでした。" +
+                            "学校へお問い合わせください。",
                         color = Color(0xFF16304E),
                         fontSize = 14.sp,
                         lineHeight = 24.sp

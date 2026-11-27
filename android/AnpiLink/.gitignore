@@ -13,3 +13,22 @@
 .externalNativeBuild
 .cxx
 local.properties
+# Build files
+**/build/
+*.apk
+*.aab
+
+# Security
+*.jks
+*.keystore
+*.pem
+.env
+.env.*
+*service-account*.json
+*firebase-adminsdk*.json
+keystore.properties
+
+# Android Studio
+.idea/
+
+.kotlin/

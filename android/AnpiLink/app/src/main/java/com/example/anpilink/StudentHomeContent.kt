@@ -28,6 +28,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -70,6 +71,9 @@ fun StudentHomeContent(
     var screen by remember(session) {
         mutableStateOf("HOME")
     }
+
+    var answerDispatchId by remember(session) { mutableStateOf<Long?>(null) }
+    var selectedNotice by remember(session) { mutableStateOf<StudentDispatchNotice?>(null) }
 
     var replacement by remember(session) { mutableStateOf<PendingSafetyReport?>(null) }
 
@@ -138,7 +142,7 @@ fun StudentHomeContent(
         dangerError = null
     }
 
-    fun submitDanger() {
+    fun submitDanger(dispatchId: Long? = null) {
         if (sendingDanger || answerBusy || autoSending || loggingOut) {
             return
         }
@@ -152,7 +156,8 @@ fun StudentHomeContent(
                 SafetyReportApi.preparePending(
                     context = context,
                     session = session,
-                    status = "DANGER"
+                    status = "DANGER",
+                    dispatchId = dispatchId
                 )
 
                 val result = PendingSafetyReportSender.send(
@@ -261,7 +266,8 @@ fun StudentHomeContent(
                         StudentAnswerContent(
                             session = session,
                             onHome = { openHome() },
-                            onSendingChanged = onAnswerBusyChanged
+                            onSendingChanged = onAnswerBusyChanged,
+                            dispatchId = answerDispatchId
                         )
                     }
                 }
@@ -288,22 +294,49 @@ fun StudentHomeContent(
                             onBack = { openMore() }
                         )
 
-                        StudentMenuItem(
-                            label = "避難訓練のお知らせ",
-                            enabled = navigationEnabled,
-                            onClick = {
-                                screen = "NOTICE_DETAIL"
+                        var notices by remember(session) { mutableStateOf<List<StudentDispatchNotice>>(emptyList()) }
+                        var loading by remember(session) { mutableStateOf(true) }
+                        var error by remember(session) { mutableStateOf<String?>(null) }
+                        var retry by remember(session) { mutableStateOf(0) }
+                        LaunchedEffect(session, retry) {
+                            loading = true
+                            error = null
+                            try {
+                                notices = StudentNoticesApi.getNotices(session)
+                            } catch (e: CancellationException) {
+                                throw e
+                            } catch (e: IOException) {
+                                error = e.message ?: "連絡を取得できませんでした。"
+                            } catch (e: JSONException) {
+                                error = "サーバーの応答を読み取れませんでした。"
+                            } finally {
+                                loading = false
                             }
-                        )
-
-                        Text(
-                            text =
-                                "画面確認用のデモです。" +
-                                        "実際の学校からの連絡ではありません。",
-                            color = StudentMuted,
-                            fontSize = 12.sp,
-                            lineHeight = 20.sp
-                        )
+                        }
+                        when {
+                            loading -> Text("読み込み中…", color = StudentMuted, fontSize = 14.sp)
+                            error != null -> {
+                                Text(error.orEmpty(), color = Color(0xFFAC3341), fontSize = 14.sp)
+                                OutlinedButton(onClick = { retry++ }, enabled = navigationEnabled) {
+                                    Text("再試行")
+                                }
+                            }
+                            notices.isEmpty() -> Text("通知はありません。", color = StudentMuted, fontSize = 14.sp)
+                            else -> notices.forEach { notice ->
+                                val category = if (notice.deadlineAt != null) {
+                                    if (notice.answered) "安否確認・回答済み" else "安否確認・未回答"
+                                } else "通常通知"
+                                StudentMenuItem(
+                                    label = "【$category】\n${notice.title}",
+                                    enabled = navigationEnabled,
+                                    unread = notice.readAt == null,
+                                    onClick = {
+                                        selectedNotice = notice
+                                        screen = "NOTICE_DETAIL"
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -311,18 +344,69 @@ fun StudentHomeContent(
                     StudentScrollablePage {
                         StudentPageHeading(
                             title = "学校からの連絡",
-                            onBack = {
-                                screen = "NOTICES"
-                            }
+                            onBack = { screen = "NOTICES" }
                         )
 
-                        StudentPreviewCard(
-                            title = "避難訓練のお知らせ",
-                            body =
-                                "画面確認用のデモです。\n" +
-                                        "学校からの連絡内容は、" +
-                                        "配信機能の実装後に表示します。"
-                        )
+                        selectedNotice?.let { notice ->
+                            var readError by remember(session, notice.dispatchId) { mutableStateOf<String?>(null) }
+                            var readRetry by remember(session, notice.dispatchId) { mutableStateOf(0) }
+                            LaunchedEffect(session, notice.dispatchId, readRetry) {
+                                if (notice.readAt == null) {
+                                    readError = null
+                                    try {
+                                        StudentNoticesApi.markRead(session, notice.dispatchId)
+                                    } catch (e: CancellationException) {
+                                        throw e
+                                    } catch (e: IOException) {
+                                        readError = "既読状態を登録できませんでした。"
+                                    } catch (e: JSONException) {
+                                        readError = "サーバーの応答を読み取れませんでした。"
+                                    }
+                                }
+                            }
+                            val body = buildString {
+                                append(notice.message)
+                                append("\n\n配信日時：")
+                                append(formatStudentNoticeTime(notice.dispatchedAt))
+                                notice.deadlineAt?.let {
+                                    append("\n回答期限：")
+                                    append(formatStudentNoticeTime(it))
+                                }
+                                if (notice.deadlineAt != null) {
+                                    append(if (notice.answered) "\n回答済み" else "\n未回答")
+                                }
+                            }
+                            Text(
+                                text = if (notice.deadlineAt != null) "安否確認通知" else "通常通知",
+                                color = StudentBlue,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                            StudentPreviewCard(title = notice.title, body = body)
+                            readError?.let { error ->
+                                Text(error, color = Color(0xFFAC3341), fontSize = 14.sp)
+                                OutlinedButton(onClick = { readRetry++ }, enabled = navigationEnabled) {
+                                    Text("再試行")
+                                }
+                            }
+                            if (notice.deadlineAt != null && !notice.answered) {
+                                Button(
+                                    onClick = {
+                                        answerDispatchId = notice.dispatchId
+                                        screen = "ANSWER"
+                                    },
+                                    enabled = navigationEnabled,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(containerColor = StudentBlue)
+                                ) { Text("安否回答") }
+                                OutlinedButton(
+                                    onClick = { submitDanger(notice.dispatchId) },
+                                    enabled = navigationEnabled,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) { Text("危険", color = Color(0xFFAC3341)) }
+                                dangerError?.let { Text(it, color = Color(0xFFAC3341)) }
+                            }
+                        }
                     }
                 }
 
@@ -473,6 +557,7 @@ fun StudentHomeContent(
                         errorMessage = dangerError,
                         onAnswer = {
                             dangerError = null
+                            answerDispatchId = null
                             screen = "ANSWER"
                         },
                         onDanger = { submitDanger() }
@@ -594,6 +679,7 @@ private fun StudentPageHeading(
 private fun StudentMenuItem(
     label: String,
     enabled: Boolean,
+    unread: Boolean = false,
     onClick: () -> Unit
 ) {
     Surface(
@@ -612,6 +698,11 @@ private fun StudentMenuItem(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (unread) {
+                Canvas(modifier = Modifier.size(9.dp)) {
+                    drawCircle(color = StudentBlue)
+                }
+            }
             Text(
                 text = label,
                 modifier = Modifier.weight(1f),

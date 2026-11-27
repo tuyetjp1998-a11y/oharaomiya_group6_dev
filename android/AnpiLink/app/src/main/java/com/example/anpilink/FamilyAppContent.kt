@@ -58,6 +58,8 @@ fun FamilyAppContent(
         mutableStateOf<String?>(null)
     }
 
+    var selectedReminder by remember(session) { mutableStateOf<FamilyNotice?>(null) }
+
     val navy = Color(0xFF16304E)
     val blue = Color(0xFF2866C9)
     val muted = Color(0xFF8192A6)
@@ -148,10 +150,12 @@ fun FamilyAppContent(
 
                         "NOTICES" -> {
                             FamilyNoticesContent(
+                                session = session,
                                 onBack = {
                                     screen = "MORE"
                                 },
-                                onDetail = {
+                                onDetail = { reminder ->
+                                    selectedReminder = reminder
                                     screen = "NOTICE_DETAIL"
                                 }
                             )
@@ -159,6 +163,8 @@ fun FamilyAppContent(
 
                         "NOTICE_DETAIL" -> {
                             FamilyNoticeDetailContent(
+                                reminder = selectedReminder,
+                                session = session,
                                 onBack = {
                                     screen = "NOTICES"
                                 }

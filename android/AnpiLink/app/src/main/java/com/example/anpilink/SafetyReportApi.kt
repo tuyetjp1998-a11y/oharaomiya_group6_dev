@@ -24,6 +24,13 @@ data class SafetyReportResult(
     val location: StudentReportLocation? = null
 )
 
+/** サーバーに登録された困っている内容。 */
+data class StudentWorriedType(
+    val id: Long,
+    val code: String,
+    val name: String
+)
+
 /**
  * 安否回答APIのHTTPエラー。
  */
@@ -48,13 +55,73 @@ object SafetyReportApi {
         "STALKING"
     )
 
-    private val worriedTypes = setOf(
-        "ACCIDENT",
-        "EARTHQUAKE",
-        "FIRE",
-        "LANDSLIDE",
-        "HEATSTROKE"
-    )
+    private const val WORRIED_TYPES_URL =
+        ApiConfig.BASE_URL + "/api/student/WorriedTypeList.action"
+
+    // 動的なコードの形式を確認する。存在確認はサーバー側で行う。
+    fun isValidWorriedTypeCode(code: String): Boolean =
+        code.isNotBlank() && code.length <= 50 && '\u0000' !in code
+
+    /** 有効な困っている内容を取得する。認証失敗時のみ一度再試行する。 */
+    suspend fun fetchWorriedTypes(session: LoginSession): List<StudentWorriedType> {
+        require(session.role == "STUDENT")
+        try {
+            val token = session.getValidAccessToken()
+            return try {
+                fetchWorriedTypesWithToken(token)
+            } catch (e: SafetyReportApiException) {
+                if (e.statusCode != 401) throw e
+                fetchWorriedTypesWithToken(session.refreshAfterUnauthorized(token))
+            }
+        } catch (e: RefreshApiException) {
+            throw SafetyReportApiException(
+                e.statusCode, e.message ?: "再度ログインしてください。"
+            )
+        }
+    }
+
+    private suspend fun fetchWorriedTypesWithToken(
+        accessToken: String
+    ): List<StudentWorriedType> = withContext(Dispatchers.IO) {
+        val connection = URL(WORRIED_TYPES_URL).openConnection() as HttpURLConnection
+        try {
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 15_000
+            connection.readTimeout = 30_000
+            connection.instanceFollowRedirects = false
+            connection.useCaches = false
+            connection.setRequestProperty("Accept", "application/json")
+            connection.setRequestProperty("Authorization", "Bearer $accessToken")
+            val statusCode = connection.responseCode
+            if (statusCode != HttpURLConnection.HTTP_OK) {
+                if (statusCode >= 400) connection.errorStream?.close()
+                else connection.inputStream.close()
+                throw SafetyReportApiException(statusCode, when (statusCode) {
+                    401 -> "再度ログインしてください。"
+                    403 -> "一覧を取得する権限がありません。"
+                    else -> "困っている内容を取得できませんでした。（HTTP $statusCode）"
+                })
+            }
+            val text = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+            val items = JSONObject(text).getJSONArray("items")
+            val result = ArrayList<StudentWorriedType>(items.length())
+            val codes = HashSet<String>()
+            for (i in 0 until items.length()) {
+                val item = items.getJSONObject(i)
+                val id = item.getLong("id")
+                val code = item.getString("code")
+                val name = item.getString("name")
+                if (id <= 0 || !isValidWorriedTypeCode(code) ||
+                    name.isBlank() || !codes.add(code)) {
+                    throw JSONException("困っている内容の一覧が正しくありません。")
+                }
+                result.add(StudentWorriedType(id, code, name))
+            }
+            result
+        } finally {
+            connection.disconnect()
+        }
+    }
 
     /**
      * 設定を確認して位置情報を取得し、回答を送信する。
@@ -66,7 +133,8 @@ object SafetyReportApi {
         dangerType: String? = null,
         comment: String? = null,
         context: Context? = null,
-        requestId: String = UUID.randomUUID().toString()
+        requestId: String = UUID.randomUUID().toString(),
+        dispatchId: Long? = null
     ): SafetyReportResult {
 
         require(
@@ -108,7 +176,8 @@ object SafetyReportApi {
                     dangerType = dangerType,
                     comment = comment,
                     location = location,
-                    requestId = requestId
+                    requestId = requestId,
+                    dispatchId = dispatchId
                 )
             } catch (e: SafetyReportApiException) {
                 if (e.statusCode != 401) {
@@ -125,7 +194,8 @@ object SafetyReportApi {
                     dangerType = dangerType,
                     comment = comment,
                     location = location,
-                    requestId = requestId
+                    requestId = requestId,
+                    dispatchId = dispatchId
                 )
             }
         } catch (e: RefreshApiException) {
@@ -173,7 +243,8 @@ object SafetyReportApi {
                 dangerType = pending.dangerType,
                 comment = pending.comment,
                 location = pending.location,
-                requestId = pending.requestId
+                requestId = pending.requestId,
+                dispatchId = pending.dispatchId
             )
         }
 
@@ -210,7 +281,8 @@ object SafetyReportApi {
         session: LoginSession,
         status: String,
         dangerType: String? = null,
-        comment: String? = null
+        comment: String? = null,
+        dispatchId: Long? = null
     ): PendingSafetyReport {
         require(session.role == "STUDENT") {
             "生徒アカウントでログインしてください。"
@@ -241,7 +313,8 @@ object SafetyReportApi {
             status = status,
             dangerType = dangerType,
             comment = comment,
-            location = location
+            location = location,
+            dispatchId = dispatchId
         )
     }
     /**
@@ -310,7 +383,8 @@ object SafetyReportApi {
         dangerType: String? = null,
         comment: String? = null,
         location: StudentReportLocation? = null,
-        requestId: String = UUID.randomUUID().toString()
+        requestId: String = UUID.randomUUID().toString(),
+        dispatchId: Long? = null
     ): SafetyReportResult = withContext(Dispatchers.IO) {
 
         val normalizedComment = comment
@@ -330,7 +404,7 @@ object SafetyReportApi {
                         normalizedComment == null
 
             "WORRIED" ->
-                (dangerType == null || dangerType in worriedTypes) &&
+                (dangerType == null || isValidWorriedTypeCode(dangerType)) &&
                         (dangerType != null || normalizedComment != null)
 
             else -> false
@@ -340,8 +414,11 @@ object SafetyReportApi {
             "安否回答の内容が正しくありません。"
         }
 
+        require(dispatchId == null || dispatchId > 0)
         val requestJson = JSONObject()
             .put("requestId", requestId)
+        if (dispatchId != null) requestJson.put("dispatchId", dispatchId)
+        requestJson
             .put("status", status)
             .put("dangerType", dangerType ?: JSONObject.NULL)
             .put("comment", normalizedComment ?: JSONObject.NULL)
@@ -432,6 +509,9 @@ object SafetyReportApi {
                 .use { it.readText() }
 
             val body = JSONObject(responseText)
+            if (dispatchId != null && (body.isNull("dispatchId") || body.getLong("dispatchId") != dispatchId)) {
+                throw JSONException("配信IDが一致しません。")
+            }
 
             // 送信した値ではなく、サーバーの保存結果を使用する。
             val savedLocation = if (

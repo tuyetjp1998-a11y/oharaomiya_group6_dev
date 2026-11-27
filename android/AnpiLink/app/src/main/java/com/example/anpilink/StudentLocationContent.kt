@@ -454,7 +454,11 @@ private fun formatStudentSentAnswer(report: StudentLatestReportLocation): String
         else -> return "確認できません"
     }
     if (report.status == "SAFE") return status
-    val detail = when (report.dangerType) {
+    // 「困っている」はDBの名称を優先する。旧サーバーの固定項目にも対応する。
+    val dynamicName = if (report.status == "WORRIED" && report.dangerType != null) {
+        report.dangerTypeName?.takeIf { it.isNotBlank() }
+    } else null
+    val detail = dynamicName ?: when (report.dangerType) {
         null -> null
         "ACCIDENT" -> "事故"
         "EARTHQUAKE" -> "地震"
